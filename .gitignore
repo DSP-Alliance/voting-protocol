@@ -12,3 +12,14 @@ docs/
 
 # Dotenv file
 .env
+
+# Zokrates files
+abi.json
+out
+out.r1cs
+out.wtns
+proof.json
+proving.key
+verification.key
+witness
+verifier.sol

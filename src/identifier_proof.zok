@@ -1,0 +1,7 @@
+import "hashes/sha256/512bitPacked" as sha256packed;
+
+def main(private field a, private field b, private field c, private field d, public field id1, public field id2) {
+    field[2] hash = sha256packed([a, b, c, d]);
+    assert(hash[0] == id1);
+    assert(hash[1] == id2);
+}
