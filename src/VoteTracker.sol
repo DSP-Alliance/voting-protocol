@@ -6,8 +6,6 @@ contract VoteTracker {
     uint32 private voteStart;
 
     uint72 private yesVotes;
-
-    uint256 private voteDetermination;
     uint32 private voteLength;
 
     uint96 private noVotes;
