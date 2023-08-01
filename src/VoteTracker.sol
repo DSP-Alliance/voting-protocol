@@ -9,7 +9,7 @@ contract VoteTracker {
     uint32 private voteLength;
 
     uint96 private noVotes;
-    mapping (address => bool) public hasVoted;
+    mapping (bytes32 => bool) public hasVoted;
 
     uint80 private abstainVotes;
 
@@ -19,10 +19,11 @@ contract VoteTracker {
     }
 
     function castVote(uint256 vote) public {
-        if (hasVoted[msg.sender]) {
+        bytes32 senderHash = keccak256(abi.encodePacked(msg.sender));
+        if (hasVoted[senderHash]) {
             revert();
         }
-        hasVoted[msg.sender] = true;
+        hasVoted[senderHash] = true;
 
         uint vote_num = vote % 3;
         if (vote_num == 0) {
