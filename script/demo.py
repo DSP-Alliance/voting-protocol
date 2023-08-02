@@ -6,10 +6,12 @@ rpc = "https://api.calibration.node.glif.io/rpc/v1"
 # get provider
 w3 = Web3(Web3.HTTPProvider(rpc))
 
-pk = "58c54560eacbc4b3ee136767b100ee55bede3396e619caa164ba4c71182ee4fc"
+pk = "9fae980ce85d8ce2a813552436fa86c8fe5f7fe3641c345e5d6ff8f309535817"
 # get the public key
-myAddr = "0x3304a183aE4353CE57f062bcacc1CB2eDED5Ff2b"
+myAddr = "0x1a260b2FbccDF49A27dbF15881dDD7172e936CA7"
 contract = "0xA6fF8b75c8e068d74a279DbacBcFaf4827272d1f"
+print("Contract address: ", contract)
+print("Network: Calibration (314159)")
 
 castVoteSig = "0x3eb76b9c"
 getVoteResultsSig = "0x86a66dc3"
@@ -33,8 +35,11 @@ vote = adjusted + num
 print("Encoded vote: ", hex(vote))
 
 data = castVoteSig + hex(vote)[2:].zfill(64)
-print("Data: ", data)
 
+# Get contract bytecode
+bytecode = w3.eth.get_code(contract)
+print("Contract bytecode: ", bytecode.hex())
+input()
 
 # make the transaction
 nonce = w3.eth.get_transaction_count(myAddr)
@@ -51,8 +56,9 @@ tx = {
 }
 signed = w3.eth.account.sign_transaction(tx, pk)
 hash = w3.eth.send_raw_transaction(signed.rawTransaction)
+print("Vote transaction hash: ", hash.hex())
 w3.eth.wait_for_transaction_receipt(hash)
-print("voted at ", hash.hex())
+print("Transaction confirmed")
 
 # get the vote results
 data = getVoteResultsSig
@@ -61,5 +67,11 @@ tx = {
     "to": w3.toChecksumAddress(contract),
     "data": data,
 }
-result = w3.eth.call(tx)
-print("Vote results: ", result.hex())
+print("Getting vote results...")
+try:
+    result = w3.eth.call(tx)
+except Exception as e:
+    print("Error getting vote results: ", e)
+    print("Vote results are not available until the vote is over")
+
+print("")
