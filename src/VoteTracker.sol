@@ -52,12 +52,11 @@ contract VoteTracker {
     }
 
     function registerVoter() public returns (uint256 power) {
-        bool miner = isMiner(msg.sender);
-        if (miner) {
-            power = minerPower(msg.sender);
-        } else {
-            power = 1;
+        if (voterWeight[msg.sender] != 0) {
+            revert();
         }
+
+        power = voterPower(msg.sender);
         voterWeight[msg.sender] = power;
     }
 
@@ -89,7 +88,7 @@ contract VoteTracker {
     /*                       Miner Verification                       */
     /******************************************************************/
 
-    /// TODO: Implement this function
+    /// TODO: Implement valid miner determination
     function isMiner(address sender) internal pure returns (bool) {
         if (sender == address(0)) {
             return false;
@@ -98,10 +97,19 @@ contract VoteTracker {
     }
 
     /// TODO: Implement this function
-    function minerPower(address miner) internal pure returns (uint256) {
-        if (miner == address(0)) {
+    function voterPower(address voter) internal pure returns (uint256 power) {
+        if (voter == address(0)) {
             return 0;
         }
-        return 10;
+        bool miner = isMiner(voter);
+
+        // TODO: Implement precise weight calculation
+        if (miner) {
+            // Vote weight as a miner
+            power = 10;
+        } else {
+            // Vote weight as a non-miner
+            power = 1;
+        }
     }
 }
