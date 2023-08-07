@@ -36,6 +36,10 @@ contract VoteTracker {
         voteStart = uint32(block.timestamp);
     }
 
+    /******************************************************************/
+    /*                        Public Functions                        */
+    /******************************************************************/
+
     function castVote(uint256 vote) public voting(msg.sender) isRegistered(msg.sender) {
         uint vote_num = vote % 3;
         if (vote_num == 0) {
@@ -57,6 +61,17 @@ contract VoteTracker {
         voterWeight[msg.sender] = power;
     }
 
+    function getVoteResults() public view returns (uint256, uint256, uint256) {
+        if (uint32(block.timestamp) < voteStart + voteLength) {
+            revert();
+        }
+        return (yesVotes, noVotes, abstainVotes);
+    }
+
+    /******************************************************************/
+    /*                          Vote Adding                           */
+    /******************************************************************/
+
     function addYesVote(address voter) internal {
         uint weight = voterWeight[voter];
         yesVotes += weight;
@@ -70,6 +85,9 @@ contract VoteTracker {
         abstainVotes += weight;
     }
 
+    /******************************************************************/
+    /*                       Miner Verification                       */
+    /******************************************************************/
 
     /// TODO: Implement this function
     function isMiner(address sender) internal pure returns (bool) {
@@ -85,12 +103,5 @@ contract VoteTracker {
             return 0;
         }
         return 10;
-    }
-
-    function getVoteResults() public view returns (uint256, uint256, uint256) {
-        if (uint32(block.timestamp) < voteStart + voteLength) {
-            revert();
-        }
-        return (yesVotes, noVotes, abstainVotes);
     }
 }
