@@ -13,7 +13,6 @@ contract VoteTracker {
     mapping (bytes32 => bool) internal hasVoted;
     mapping (address => uint256) internal voterWeight;
 
-    // TODO: Add custom error messages for each revert
     error AlreadyVoted();
     error NotRegistered();
     error AlreadyRegistered();
