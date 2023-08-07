@@ -1,7 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import "filecoin-solidity/MinerAPI.sol";
+import "filecoin-solidity/PowerAPI.sol";
+import "filecoin-solidity/PrecompilesAPI.sol";
+import "filecoin-solidity/types/CommonTypes.sol";
+import "filecoin-solidity/types/PowerTypes.sol";
+
 contract VoteTracker {
+    using CommonTypes for uint64;
 
     uint32 private voteStart;
     uint32 private voteLength;
@@ -55,12 +62,15 @@ contract VoteTracker {
         }
     }
 
-    function registerVoter() public returns (uint256 power) {
+    /// @param miner The miner to register for
+    /// @notice Msg sender must be a controlling address for the miner
+    /// @notice If not registering for a miner, pass in address(0)
+    function registerVoter(CommonTypes.FilActorId miner) public returns (uint256 power) {
         if (voterWeight[msg.sender] != 0) {
             revert AlreadyRegistered();
         }
 
-        power = voterPower(msg.sender);
+        power = voterPower(CommonTypes.FilActorId.unwrap(miner), msg.sender);
         voterWeight[msg.sender] = power;
     }
 
@@ -89,28 +99,37 @@ contract VoteTracker {
     /*                       Miner Verification                       */
     /******************************************************************/
 
-    /// TODO: Implement valid miner determination
-    function isMiner(address sender) internal pure returns (bool) {
-        if (sender == address(0)) {
-            return false;
-        }
-        return true;
+    function isMiner(uint64 minerId, address sender) internal view returns (bool) {
+        bool controlling = MinerAPI.isControllingAddress(CommonTypes.FilActorId.wrap(minerId), toFilAddr(sender));
+        return controlling;
     }
 
     /// TODO: Implement this function
-    function voterPower(address voter) internal pure returns (uint256 power) {
-        if (voter == address(0)) {
-            return 0;
-        }
-        bool miner = isMiner(voter);
+    function voterPower(uint64 minerId, address voter) internal view returns (uint256 power) {
+        bool isminer = isMiner(minerId, voter);
 
         // TODO: Implement precise weight calculation
-        if (miner) {
+        if (isminer) {
             // Vote weight as a miner
-            power = 10;
+            PowerTypes.MinerRawPowerReturn memory pow = PowerAPI.minerRawPower(uint64(minerId));
+            CommonTypes.BigInt memory p = pow.raw_byte_power;
+            if (p.neg) {
+                power = 10;
+            } else {
+                assembly {
+                    power := mload(add(p, 32))
+                }
+            }
         } else {
             // Vote weight as a non-miner
-            power = 1;
+            power = 10;
         }
+    }
+
+    function toFilAddr(address addr) internal view returns (CommonTypes.FilAddress memory) {
+        uint64 actorid = PrecompilesAPI.resolveEthAddress(addr);
+        bytes memory delg = PrecompilesAPI.lookupDelegatedAddress(actorid);
+        CommonTypes.FilAddress memory filaddr = CommonTypes.FilAddress(delg);
+        return filaddr;
     }
 }
