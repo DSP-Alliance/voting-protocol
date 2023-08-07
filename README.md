@@ -1,5 +1,7 @@
 # Filecoin ZK Voting Protocol
 
+At the current stage no zero knowledge proofs are being utilized.
+
 ## Compiling
 
 ```bash
