@@ -14,11 +14,15 @@ contract VoteTracker {
     mapping (address => uint256) internal voterWeight;
 
     // TODO: Add custom error messages for each revert
+    error AlreadyVoted();
+    error NotRegistered();
+    error AlreadyRegistered();
+    error VoteNotConcluded();
 
     modifier voting(address sender) {
         bytes32 senderHash = keccak256(abi.encodePacked(sender));
         if (hasVoted[senderHash]) {
-            revert();
+            revert AlreadyVoted();
         }
         _;
         hasVoted[senderHash] = true;
@@ -26,7 +30,7 @@ contract VoteTracker {
 
     modifier isRegistered(address sender) {
         if (voterWeight[sender] == 0) {
-            revert();
+            revert NotRegistered();
         }
         _;
     }
@@ -53,7 +57,7 @@ contract VoteTracker {
 
     function registerVoter() public returns (uint256 power) {
         if (voterWeight[msg.sender] != 0) {
-            revert();
+            revert AlreadyRegistered();
         }
 
         power = voterPower(msg.sender);
@@ -62,7 +66,7 @@ contract VoteTracker {
 
     function getVoteResults() public view returns (uint256, uint256, uint256) {
         if (uint32(block.timestamp) < voteStart + voteLength) {
-            revert();
+            revert VoteNotConcluded();
         }
         return (yesVotes, noVotes, abstainVotes);
     }
