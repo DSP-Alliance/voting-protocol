@@ -2,14 +2,17 @@
 pragma solidity ^0.8.19;
 
 import "./VoteTracker.sol";
+import "solmate/auth/Owned.sol";
 
-contract VoteFactory {
+contract VoteFactory is Owned {
     mapping (uint64 => address) public FIPnumToAddress;
     address[] public deployedVotes;
 
     event VoteStarted(address vote, uint64 fipNum, uint32 length);
 
-    function startVote(uint32 length, uint64 fipNum) public returns (address vote) {
+    constructor() Owned(msg.sender) {}
+
+    function startVote(uint32 length, uint64 fipNum) public onlyOwner returns (address vote) {
         require(FIPnumToAddress[fipNum] == address(0), "Vote already exists for this FIP");
 
         bytes memory bytecode = type(VoteTracker).creationCode;

@@ -100,6 +100,9 @@ contract VoteTracker {
     /******************************************************************/
 
     function isMiner(uint64 minerId, address sender) internal view returns (bool) {
+        if (minerId == 0) {
+            return false;
+        }
         bool controlling = MinerAPI.isControllingAddress(CommonTypes.FilActorId.wrap(minerId), toFilAddr(sender));
         return controlling;
     }
