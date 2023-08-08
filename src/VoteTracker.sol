@@ -104,11 +104,9 @@ contract VoteTracker {
         return controlling;
     }
 
-    /// TODO: Implement this function
     function voterPower(uint64 minerId, address voter) internal view returns (uint256 power) {
         bool isminer = isMiner(minerId, voter);
 
-        // TODO: Implement precise weight calculation
         if (isminer) {
             // Vote weight as a miner
             PowerTypes.MinerRawPowerReturn memory pow = PowerAPI.minerRawPower(uint64(minerId));
