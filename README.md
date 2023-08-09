@@ -43,3 +43,11 @@ The numbers returned are the weighted amounts of yes, no, and abstain respective
 ## Demo
 
 ![Demo Video](./assets/demo.gif)
+
+## Not Working
+
+Currently the testing for the tracker fails in some aspects that involves Filecoin's address look up precompiles, the Miner API, and Power API from [filecoin solidity](https://github.com/filecoin-project/filecoin-solidity). 
+
+This is used to verify that a supplied miner Id is controlled by the vote registration transaction sender.
+
+The API modules are also currently not working, which is used for looking up a miner's raw byte power supplied to the network.
