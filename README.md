@@ -39,3 +39,7 @@ function getVoteResults() public view returns (uint256, uint256, uint256)
 ```
 
 The numbers returned are the weighted amounts of yes, no, and abstain respectively.
+
+## Demo
+
+[![Demo Video](./assets/demo.gif)](./assets/demo.mkv)
