@@ -46,8 +46,20 @@ The numbers returned are the weighted amounts of yes, no, and abstain respective
 
 ## Not Working
 
-Currently the testing for the tracker fails in some aspects that involves Filecoin's address look up precompiles, the Miner API, and Power API from [filecoin solidity](https://github.com/filecoin-project/filecoin-solidity). 
+Currently the testing for the tracker fails in some aspects that involves Filecoin's address look up precompiles, the Miner API, and Power API from [filecoin solidity](https://github.com/filecoin-project/filecoin-solidity).
 
 This is used to verify that a supplied miner Id is controlled by the vote registration transaction sender.
 
 The API modules are also currently not working, which is used for looking up a miner's raw byte power supplied to the network.
+
+```C
+function isMiner(uint64 minerId, address sender) internal view returns (bool)
+```
+
+This should return a proper true/false when determining if ``sender`` is a controlling address for ``minerId``
+
+```C
+function voterPower(uint64 minerId, address voter) internal view returns (uint256 power)
+```
+
+This function should return the miner's raw byte power or 10 if the minerId is 0
