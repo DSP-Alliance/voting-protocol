@@ -58,8 +58,12 @@ function isMiner(uint64 minerId, address sender) internal view returns (bool)
 
 This should return a proper true/false when determining if ``sender`` is a controlling address for ``minerId``
 
+Embedded in this function is some calls to precompiles for address lookups which are returning null bytes, even on valid Id's.
+
 ```C
 function voterPower(uint64 minerId, address voter) internal view returns (uint256 power)
 ```
 
-This function should return the miner's raw byte power or 10 if the minerId is 0
+This function should return the miner's raw byte power or 10 if the minerId is 0.
+
+Instead of proper byte power being returned the values returned are zero even for minerId's which have storage allocated to the network.
