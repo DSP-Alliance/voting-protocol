@@ -1,18 +1,41 @@
-# Filecoin ZK Voting Protocol
+# Filecoin Voting Protocol
 
-At the current stage no zero knowledge proofs are being utilized.
+## Registration
 
-## Compiling
+To be able to cast votes a user must first register with the registration function.
 
-```bash
-zokrates compile -i src/identifier_proof.zok
-zokrates export-verifier
+```C
+function registerVoter(CommonTypes.FilActorId miner) public returns (uint256 power)
 ```
 
-## Proof Generation
+If you are not a miner then you should pass a zero as the actor Id. If you are a miner then pass your miner Id from a controlling address (owner, worker). The contract will verify that you indeed control that miner.
 
-```bash
-zokrates compute-witness -a 0 1
-zokrates generate-proof
-zokrates verify
+## Weights
+
+Each voter is assigned a weight to their votes to ensure people with more stake in the protocol get an appropriate amount of power.
+
+1. Miners - Weight proportional to the amount of raw byte power supplied to the network
+
+2. Non-miners - A weight of 10 (subject to change) or the equivalent of 10 bytes of raw byte power
+
+## Vote casting
+
+After a user has registered then they can cast a vote. There are three voting choices
+
+1. Yes
+2. No
+3. Abstain
+
+To encode your vote you can submit any 256 bit unsigned integer. To determine the vote modulo 3 is taken of the number. So yes would be 0, no would be 1, abstain would be 2, yes would be 3, and so on.
+
+Users cannot vote twice.
+
+## Results
+
+After the voting period is over, no more votes can be cast and a new function is exposed to retrieve the votes.
+
+```C
+function getVoteResults() public view returns (uint256, uint256, uint256)
 ```
+
+The numbers returned are the weighted amounts of yes, no, and abstain respectively.
