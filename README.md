@@ -42,4 +42,4 @@ The numbers returned are the weighted amounts of yes, no, and abstain respective
 
 ## Demo
 
-[![Demo Video](./assets/demo.gif)](./assets/demo.mkv)
+![Demo Video](./assets/demo.gif)
