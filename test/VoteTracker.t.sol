@@ -7,8 +7,10 @@ import {console} from "./utils/Console.sol";
 import {VoteTracker} from "../src/VoteTracker.sol";
 import {Utilities} from "./utils/Utilities.sol";
 import {CommonTypes} from "filecoin-solidity/types/CommonTypes.sol";
+import {PowerTypes} from "filecoin-solidity/types/PowerTypes.sol";
 import {MinerTypes} from "filecoin-solidity/types/MinerTypes.sol";
 import {MinerAPI} from "filecoin-solidity/MinerAPI.sol";
+import {PowerAPI} from "filecoin-solidity/PowerAPI.sol";
 import {PrecompilesAPI} from "filecoin-solidity/PrecompilesAPI.sol";
 
 /* solhint-prettier-ignore */
@@ -59,7 +61,7 @@ contract VoteTrackerTest is DSTestPlus {
 
     function testToFilActorId() public returns (bytes memory) {
         // this is f410fmhcspsb56aa7teobq5s2awfbpdgfuot6zngijra encoded to hex
-        bytes memory addr = hex"66343130666D686373707362353661613774656F62713573326177666270646766756F74367A6E67696A726120";
+        bytes memory addr = hex"6D686373707362353661613774656F62713573326177666270646766756F74367A6E67696A726120";
 
         // this is actor Id of the above account
         bytes memory delegatedAddr = abi.encodePacked(uint256(2361681));
@@ -69,5 +71,22 @@ contract VoteTrackerTest is DSTestPlus {
         require(success, "failed to call precompile");
 
         return raw_response;
+    }
+
+    function testMinerPowerAPI() public returns (uint256 power) {
+        // Vote weight as a miner
+            PowerTypes.MinerRawPowerReturn memory pow = PowerAPI.minerRawPower(uint64(1915690));
+            CommonTypes.BigInt memory p = pow.raw_byte_power;
+            if (p.neg) {
+                power = 10;
+            } else {
+                assembly {
+                    power := mload(add(p, 32))
+                }
+            }
+    }
+
+    function testMinerCount() public returns (uint256) {
+        return PowerAPI.minerCount();
     }
 }
