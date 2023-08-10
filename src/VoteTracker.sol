@@ -25,11 +25,15 @@ contract VoteTracker {
     error NotRegistered();
     error AlreadyRegistered();
     error VoteNotConcluded();
+    error VoteConcluded();
 
     modifier voting(address sender) {
         bytes32 senderHash = keccak256(abi.encodePacked(sender));
         if (hasVoted[senderHash]) {
             revert AlreadyVoted();
+        }
+        if (uint32(block.timestamp) > voteStart + voteLength) {
+            revert VoteConcluded();
         }
         _;
         hasVoted[senderHash] = true;
