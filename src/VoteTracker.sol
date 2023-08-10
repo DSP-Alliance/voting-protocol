@@ -10,8 +10,8 @@ import "filecoin-solidity/types/PowerTypes.sol";
 contract VoteTracker {
     using CommonTypes for uint64;
 
-    uint32 private voteStart;
-    uint32 private voteLength;
+    uint32 public voteStart;
+    uint32 public voteLength;
 
     uint256 private yesVotes;
     uint256 private noVotes;
