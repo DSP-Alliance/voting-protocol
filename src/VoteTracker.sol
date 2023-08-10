@@ -62,11 +62,11 @@ contract VoteTracker {
         uint vote_num = vote % 3;
         uint weight = voterWeight[msg.sender];
         if (vote_num == 0) {
-            addYesVote(weight);
+            yesVotes += weight;
         } else if (vote_num == 1) {
-            addNoVote(weight);
+            noVotes += weight;
         } else {
-            addAbstainVote(weight);
+            abstainVotes += weight;
         }
 
         emit VoteCast(msg.sender, weight, vote_num);
@@ -96,20 +96,6 @@ contract VoteTracker {
             revert VoteNotConcluded();
         }
         return (yesVotes, noVotes, abstainVotes);
-    }
-
-    /******************************************************************/
-    /*                          Vote Adding                           */
-    /******************************************************************/
-
-    function addYesVote(uint256 weight) internal {
-        yesVotes += weight;
-    }
-    function addNoVote(uint256 weight) internal {
-        noVotes += weight;
-    }
-    function addAbstainVote(uint256 weight) internal {
-        abstainVotes += weight;
     }
 
     /******************************************************************/
