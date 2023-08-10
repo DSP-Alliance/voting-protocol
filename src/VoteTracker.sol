@@ -19,6 +19,7 @@ contract VoteTracker {
 
     mapping (bytes32 => bool) internal hasVoted;
     mapping (address => uint256) internal voterWeight;
+    mapping (address => bool) internal registeredMiner;
 
     error AlreadyVoted();
     error NotRegistered();
@@ -69,9 +70,13 @@ contract VoteTracker {
         if (voterWeight[msg.sender] != 0) {
             revert AlreadyRegistered();
         }
+        if (registeredMiner[miner]) {
+            revert AlreadyRegistered();
+        }
 
         power = voterPower(CommonTypes.FilActorId.unwrap(miner), msg.sender);
         voterWeight[msg.sender] = power;
+        registeredMiner[miner] = true;
     }
 
     function getVoteResults() public view returns (uint256, uint256, uint256) {
