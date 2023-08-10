@@ -19,7 +19,10 @@ contract VoteTracker {
 
     mapping (bytes32 => bool) internal hasVoted;
     mapping (address => uint256) internal voterWeight;
-    mapping (address => bool) internal registeredMiner;
+    mapping (uint64 => bool) internal registeredMiner;
+
+    event VoteCast(address voter, uint256 weight, uint256 vote);
+    event VoterRegistered(address voter, uint64 minerId, uint256 weight);
 
     error AlreadyVoted();
     error NotRegistered();
@@ -65,6 +68,8 @@ contract VoteTracker {
         } else {
             addAbstainVote(weight);
         }
+
+        emit VoteCast(msg.sender, weight, vote_num);
     }
 
     /// @param miner The miner to register for
@@ -74,13 +79,16 @@ contract VoteTracker {
         if (voterWeight[msg.sender] != 0) {
             revert AlreadyRegistered();
         }
-        if (registeredMiner[miner]) {
+        if (registeredMiner[CommonTypes.FilActorId.unwrap(miner)]) {
             revert AlreadyRegistered();
         }
 
         power = voterPower(CommonTypes.FilActorId.unwrap(miner), msg.sender);
+
+        emit VoterRegistered(msg.sender, CommonTypes.FilActorId.unwrap(miner), power);
+
         voterWeight[msg.sender] = power;
-        registeredMiner[miner] = true;
+        registeredMiner[CommonTypes.FilActorId.unwrap(miner)] = true;
     }
 
     function getVoteResults() public view returns (uint256, uint256, uint256) {
