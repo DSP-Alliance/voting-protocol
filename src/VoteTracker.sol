@@ -3,7 +3,6 @@ pragma solidity ^0.8.13;
 
 import "filecoin-solidity/MinerAPI.sol";
 import "filecoin-solidity/PowerAPI.sol";
-import "filecoin-solidity/PrecompilesAPI.sol";
 import "filecoin-solidity/types/CommonTypes.sol";
 import "filecoin-solidity/types/PowerTypes.sol";
 
@@ -130,10 +129,8 @@ contract VoteTracker {
         }
     }
 
-    function toFilAddr(address addr) internal view returns (CommonTypes.FilAddress memory) {
-        uint64 actorid = PrecompilesAPI.resolveEthAddress(addr);
-        bytes memory delg = PrecompilesAPI.lookupDelegatedAddress(actorid);
-        CommonTypes.FilAddress memory filaddr = CommonTypes.FilAddress(delg);
-        return filaddr;
+    function toFilAddr(address addr) internal view returns (CommonTypes.FilAddress memory filAddr) {
+        bytes memory delegatedAddr = abi.encodePacked(hex"040a", addr);
+        filaddr = CommonTypes.FilAddress(delegatedAddr);
     }
 }
