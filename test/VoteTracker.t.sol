@@ -36,7 +36,7 @@ contract VoteTrackerTest is DSTestPlus {
         address user = users[0];
         vm.prank(user);
 
-        uint power = tracker.registerVoter(CommonTypes.FilActorId.wrap(0));
+        uint power = tracker.registerVoter(uint64(0));
         assertEq(power, 10);
     }
 
@@ -44,11 +44,11 @@ contract VoteTrackerTest is DSTestPlus {
         address user = users[0];
         vm.prank(user);
 
-        tracker.registerVoter(CommonTypes.FilActorId.wrap(0));
+        tracker.registerVoter(uint64(0));
         vm.expectRevert(VoteTracker.AlreadyRegistered.selector);
 
         vm.prank(user);
-        tracker.registerVoter(CommonTypes.FilActorId.wrap(0));
+        tracker.registerVoter(uint64(0));
     }
 
     function testRegisterNotYourMiner() public {
@@ -75,15 +75,24 @@ contract VoteTrackerTest is DSTestPlus {
 
     function testMinerPowerAPI() public returns (uint256 power) {
         // Vote weight as a miner
-            PowerTypes.MinerRawPowerReturn memory pow = PowerAPI.minerRawPower(uint64(1915690));
-            CommonTypes.BigInt memory p = pow.raw_byte_power;
-            if (p.neg) {
-                power = 10;
-            } else {
-                assembly {
-                    power := mload(add(p, 32))
-                }
+        PowerTypes.MinerRawPowerReturn memory pow = PowerAPI.minerRawPower(uint64(1889512));
+        CommonTypes.BigInt memory p = pow.raw_byte_power;
+        if (p.neg) {
+            power = 10;
+        } else {
+            assembly {
+                power := mload(add(p, 32))
             }
+        }
+    }
+
+    function testPrecompileCode() public returns (bytes32) {
+        address CALL_ACTOR_ADDRESS = 0xfe00000000000000000000000000000000000005;
+        bytes32 codehash;
+        assembly {
+            codehash := extcodehash(CALL_ACTOR_ADDRESS)
+        }
+        return codehash;
     }
 
     function testMinerCount() public returns (uint256) {
