@@ -7,7 +7,8 @@ calib = "https://api.calibration.node.glif.io/rpc/v1"
 w3 = Web3(Web3.HTTPProvider(calib))
 
 myAddr = "0x3304a183aE4353CE57f062bcacc1CB2eDED5Ff2b"
-pk = "58c54560eacbc4b3ee136767b100ee55bede3396e619caa164ba4c71182ee4fc"
+import os
+pk = os.environ.get('PRIVATE_KEY')
 
 factory = "0x46d3f7d2ea08f0114a2f3c50b6ad0fe0c8e3cdf2"
 
