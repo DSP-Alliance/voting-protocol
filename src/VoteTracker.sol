@@ -74,20 +74,20 @@ contract VoteTracker {
     /// @param miner The miner to register for
     /// @notice Msg sender must be a controlling address for the miner
     /// @notice If not registering for a miner, pass in address(0)
-    function registerVoter(CommonTypes.FilActorId miner) public returns (uint256 power) {
+    function registerVoter(uint64 minerId) public returns (uint256 power) {
         if (voterWeight[msg.sender] != 0) {
             revert AlreadyRegistered();
         }
-        if (registeredMiner[CommonTypes.FilActorId.unwrap(miner)]) {
+        if (registeredMiner[minerId]) {
             revert AlreadyRegistered();
         }
 
-        power = voterPower(CommonTypes.FilActorId.unwrap(miner), msg.sender);
+        power = voterPower(minerId, msg.sender);
 
-        emit VoterRegistered(msg.sender, CommonTypes.FilActorId.unwrap(miner), power);
+        emit VoterRegistered(msg.sender, minerId, power);
 
         voterWeight[msg.sender] = power;
-        registeredMiner[CommonTypes.FilActorId.unwrap(miner)] = true;
+        registeredMiner[minerId] = true;
     }
 
     function getVoteResults() public view returns (uint256, uint256, uint256) {
