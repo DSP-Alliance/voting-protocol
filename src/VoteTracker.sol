@@ -101,7 +101,7 @@ contract VoteTracker {
     /*                       Miner Verification                       */
     /******************************************************************/
 
-    function isMiner(uint64 minerId, address sender) internal view returns (bool) {
+    function isMiner(uint64 minerId, address sender) external view returns (bool) {
         if (minerId == 0) {
             return false;
         }
@@ -109,7 +109,7 @@ contract VoteTracker {
         return controlling;
     }
 
-    function voterPower(uint64 minerId, address voter) internal view returns (uint256 power) {
+    function voterPower(uint64 minerId, address voter) external view returns (uint256 power) {
         bool isminer = isMiner(minerId, voter);
 
         if (isminer) {
