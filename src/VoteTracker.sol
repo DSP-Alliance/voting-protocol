@@ -160,7 +160,6 @@ contract VoteTracker {
             if (p.neg) {
                 power = voter.balance / 1 ether;
             } else {
-                // TODO: Cast bytes to uint256 correctly
                 assembly {
                     // Length of the byte array
                     let length := mload(example)
