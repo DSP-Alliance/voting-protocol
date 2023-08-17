@@ -16,11 +16,7 @@ contract VoteFactory is Owned {
     function startVote(uint32 length, uint64 fipNum, bool doubleYesOption) public onlyOwner returns (address vote) {
         require(FIPnumToAddress[fipNum] == address(0), "Vote already exists for this FIP");
 
-        if (doubleYesOption) {
-            vote = address(new VoteTrackerDoubleYes(length));
-        } else {
-            vote = address(new VoteTracker(length));
-        }
+        vote = address(new VoteTracker(length, doubleYesOption));
 
         emit VoteStarted(vote, fipNum, length);
         FIPnumToAddress[fipNum] = vote;

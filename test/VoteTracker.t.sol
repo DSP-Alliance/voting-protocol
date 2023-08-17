@@ -27,7 +27,7 @@ contract VoteTrackerTest is DSTestPlus {
         utils = new Utilities();
         users = utils.createUsers(5);
 
-        tracker = new VoteTracker(1 days);
+        tracker = new VoteTracker(1 days, false);
 
         miners.push(CommonTypes.FilActorId.wrap(1889470));
     }

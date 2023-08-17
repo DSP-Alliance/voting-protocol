@@ -11,10 +11,13 @@ contract VoteTracker {
 
     uint32 public voteStart;
     uint32 public voteLength;
+    bool internal doubleYesOption;
 
     uint256 private yesVotes;
     uint256 private noVotes;
     uint256 private abstainVotes;
+
+    uint256 private yesVoteOption2;
 
     mapping (bytes32 => bool) internal hasVoted;
     mapping (address => uint256) internal voterWeight;
@@ -48,11 +51,11 @@ contract VoteTracker {
         _;
     }
 
-    constructor(uint32 length) {
+    constructor(uint32 length, bool _doubleYesOption) {
+        doubleYesOption = _doubleYesOption;
         voteLength = length;
         voteStart = uint32(block.timestamp);
     }
-
 
     /******************************************************************/
     /*                        Public Functions                        */
@@ -67,7 +70,11 @@ contract VoteTracker {
         uint vote_num = vote % 3;
         uint weight = voterWeight[msg.sender];
         if (vote_num == 0) {
-            yesVotes += weight;
+            if (doubleYesOption) {
+                yesChoice(vote, weight);
+            } else {
+                yesVotes += weight;
+            }
         } else if (vote_num == 1) {
             noVotes += weight;
         } else {
@@ -96,11 +103,15 @@ contract VoteTracker {
         registeredMiner[minerId] = true;
     }
 
-    function getVoteResults() public view returns (uint256, uint256, uint256) {
+    function getVoteResults() public view returns (uint256, uint256, uint256, uint256) {
         if (uint32(block.timestamp) < voteStart + voteLength) {
             revert VoteNotConcluded();
         }
-        return (yesVotes, noVotes, abstainVotes);
+        if (doubleYesOption) {
+            return (yesVotes, yesVoteOption2, noVotes, abstainVotes);
+        } else {
+            return (yesVotes, 0, noVotes, abstainVotes);
+        }
     }
 
     /******************************************************************/
@@ -138,5 +149,17 @@ contract VoteTracker {
     function toFilAddr(address addr) internal pure returns (CommonTypes.FilAddress memory filAddr) {
         bytes memory delegatedAddr = abi.encodePacked(hex"040a", addr);
         filAddr = CommonTypes.FilAddress(delegatedAddr);
+    }
+
+    /// @notice If this vote has two yes options then this function will put it in the correct category
+    /// @notice This function should only be called if the vote param modulo 3 == 0
+    function yesChoice(uint256 vote, uint256 weight) internal {
+        uint option = vote % 6;
+        // Option should only result in 0 or 3
+        if (option >= 3) {
+            yesVoteOption2 += weight;
+        } else {
+            yesVotes += weight;
+        }
     }
 }

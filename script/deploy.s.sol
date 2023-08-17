@@ -15,7 +15,8 @@ contract DeployVoteTracker is Script {
         vm.startBroadcast(deployerKey);
 
         VoteTracker tracker = new VoteTracker(
-            7 days
+            7 days,
+            false
         );
 
         vm.stopBroadcast();
