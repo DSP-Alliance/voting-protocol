@@ -16,17 +16,13 @@ contract VoteFactory is Owned {
     function startVote(uint32 length, uint64 fipNum, bool doubleYesOption) public onlyOwner returns (address vote) {
         require(FIPnumToAddress[fipNum] == address(0), "Vote already exists for this FIP");
 
-        bytes memory bytecode;
         if (doubleYesOption) {
-            bytecode = type(VoteTrackerDoubleYes).creationCode;
+            vote = address(new VoteTrackerDoubleYes(length));
         } else {
-            bytecode = type(VoteTracker).creationCode;
-        }
-        bytes32 salt = keccak256(abi.encodePacked(fipNum, length));
-        assembly {
-            vote := create2(0, add(bytecode, 32), mload(bytecode), salt)
+            vote = address(new VoteTracker(length));
         }
 
+        emit VoteStarted(vote, fipNum, length);
         FIPnumToAddress[fipNum] = vote;
         deployedVotes.push(vote);
     }

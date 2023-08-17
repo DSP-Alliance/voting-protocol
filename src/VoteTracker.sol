@@ -53,6 +53,7 @@ contract VoteTracker {
         voteStart = uint32(block.timestamp);
     }
 
+
     /******************************************************************/
     /*                        Public Functions                        */
     /******************************************************************/
@@ -71,7 +72,7 @@ contract VoteTracker {
         emit VoteCast(msg.sender, weight, vote_num);
     }
 
-    /// @param miner The miner to register for
+    /// @param minerId The miner to register for
     /// @notice Msg sender must be a controlling address for the miner
     /// @notice If not registering for a miner, pass in address(0)
     function registerVoter(uint64 minerId) public returns (uint256 power) {
@@ -101,7 +102,7 @@ contract VoteTracker {
     /*                       Miner Verification                       */
     /******************************************************************/
 
-    function isMiner(uint64 minerId, address sender) external view returns (bool) {
+    function isMiner(uint64 minerId, address sender) internal view returns (bool) {
         if (minerId == 0) {
             return false;
         }
@@ -109,7 +110,7 @@ contract VoteTracker {
         return controlling;
     }
 
-    function voterPower(uint64 minerId, address voter) external view returns (uint256 power) {
+    function voterPower(uint64 minerId, address voter) internal view returns (uint256 power) {
         bool isminer = isMiner(minerId, voter);
 
         if (isminer) {
@@ -131,6 +132,6 @@ contract VoteTracker {
 
     function toFilAddr(address addr) internal view returns (CommonTypes.FilAddress memory filAddr) {
         bytes memory delegatedAddr = abi.encodePacked(hex"040a", addr);
-        filaddr = CommonTypes.FilAddress(delegatedAddr);
+        filAddr = CommonTypes.FilAddress(delegatedAddr);
     }
 }
