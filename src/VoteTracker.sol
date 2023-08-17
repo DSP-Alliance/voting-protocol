@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.19;
+
+import "./interfaces/GlifFactory.sol";
 
 import "filecoin-solidity/MinerAPI.sol";
 import "filecoin-solidity/PowerAPI.sol";
@@ -12,6 +14,7 @@ contract VoteTracker {
     uint32 public voteStart;
     uint32 public voteLength;
     bool internal doubleYesOption;
+    address immutable glifFactory;
 
     uint256 private yesVotes;
     uint256 private noVotes;
@@ -24,7 +27,7 @@ contract VoteTracker {
     mapping (uint64 => bool) internal registeredMiner;
 
     event VoteCast(address voter, uint256 weight, uint256 vote);
-    event VoterRegistered(address voter, uint64 minerId, uint256 weight);
+    event VoterRegistered(address voter, uint64[] minerIds, uint256 weight);
 
     error AlreadyVoted();
     error NotRegistered();
@@ -51,8 +54,9 @@ contract VoteTracker {
         _;
     }
 
-    constructor(uint32 length, bool _doubleYesOption) {
+    constructor(uint32 length, bool _doubleYesOption, address _glifFactory) {
         doubleYesOption = _doubleYesOption;
+        glifFactory = _glifFactory;
         voteLength = length;
         voteStart = uint32(block.timestamp);
     }
@@ -61,8 +65,8 @@ contract VoteTracker {
     /*                        Public Functions                        */
     /******************************************************************/
 
-    function voteAndRegister(uint256 vote, uint64 minerId) public returns (uint256 voteWeight) {
-        voteWeight = registerVoter(minerId);
+    function voteAndRegister(uint256 vote, address glifPool, uint64[] calldata minerIds) public returns (uint256 voteWeight) {
+        voteWeight = registerVoter(glifPool, minerIds);
         castVote(vote);
     }
 
@@ -84,23 +88,43 @@ contract VoteTracker {
         emit VoteCast(msg.sender, weight, vote_num);
     }
 
-    /// @param minerId The miner to register for
+    /// @param minerIds The miner to register for
     /// @notice Msg sender must be a controlling address for the miner
     /// @notice If not registering for a miner, pass in address(0)
-    function registerVoter(uint64 minerId) public returns (uint256 power) {
+    function registerVoter(address glifpool, uint64[] calldata minerIds) public returns (uint256 power) {
         if (voterWeight[msg.sender] != 0) {
             revert AlreadyRegistered();
         }
-        if (registeredMiner[minerId]) {
-            revert AlreadyRegistered();
+
+        if (minerIds.length == 0) {
+            power = msg.sender.balance;
+
+            emit VoterRegistered(msg.sender, minerIds, power);
+
+            voterWeight[msg.sender] = power;
+            return power;
         }
 
-        power = voterPower(minerId, msg.sender);
+        bool glif = (glifpool != address(0) && GlifFactory(glifFactory).isAgent(glifpool));
 
-        emit VoterRegistered(msg.sender, minerId, power);
+        for (uint i = 0; i < minerIds.length; ++i) {
+            uint64 minerId = minerIds[i];
+
+            if (registeredMiner[minerId]) {
+                continue;
+            }
+
+            if (glif) {
+                power += voterPower(minerId, glifpool);
+            } else {
+                power += voterPower(minerId, msg.sender);
+            }
+            registeredMiner[minerId] = true;
+        }
+
+        emit VoterRegistered(msg.sender, minerIds, power);
 
         voterWeight[msg.sender] = power;
-        registeredMiner[minerId] = true;
     }
 
     function getVoteResults() public view returns (uint256, uint256, uint256, uint256) {
@@ -136,11 +160,13 @@ contract VoteTracker {
             if (p.neg) {
                 power = 10;
             } else {
+                // TODO: Cast bytes to uint256 correctly
                 assembly {
                     power := mload(add(p, 32))
                 }
             }
         } else {
+            // TODO: Fetch user balance as weight;
             // Vote weight as a non-miner
             power = 10;
         }

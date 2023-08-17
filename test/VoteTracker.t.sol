@@ -27,7 +27,7 @@ contract VoteTrackerTest is DSTestPlus {
         utils = new Utilities();
         users = utils.createUsers(5);
 
-        tracker = new VoteTracker(1 days, false);
+        tracker = new VoteTracker(1 days, false, address(0));
 
         miners.push(CommonTypes.FilActorId.wrap(1889470));
     }
@@ -36,7 +36,9 @@ contract VoteTrackerTest is DSTestPlus {
         address user = users[0];
         vm.prank(user);
 
-        uint power = tracker.registerVoter(uint64(0));
+        uint64[] memory minerIds;
+        minerIds[0] = uint64(1378);
+        uint power = tracker.registerVoter(address(0), minerIds);
         assertEq(power, 10);
     }
 
@@ -44,11 +46,13 @@ contract VoteTrackerTest is DSTestPlus {
         address user = users[0];
         vm.prank(user);
 
-        tracker.registerVoter(uint64(0));
+        uint64[] memory minerIds;
+        minerIds[0] = uint64(1378);
+        tracker.registerVoter(address(0), minerIds);
         vm.expectRevert(VoteTracker.AlreadyRegistered.selector);
 
         vm.prank(user);
-        tracker.registerVoter(uint64(0));
+        tracker.registerVoter(address(0), minerIds);
     }
 
     function testRegisterNotYourMiner() public {
