@@ -99,4 +99,27 @@ contract VoteTrackerTest is DSTestPlus {
     function testMinerCount() public view returns (uint256) {
         return PowerAPI.minerCount();
     }
+
+    function testBytes(bytes32 _example) public pure returns (uint256) {
+        bytes memory example = hex"1712B9E147AE141260";
+        uint256 received;
+
+        assembly {
+            // length := 0x07
+            let length := mload(example)
+
+            let _bytes := mload(add(example, 0x20))
+            let shift := mul(sub(0x40, mul(length, 2)), 0x04)
+            //mstore(add(location, 0x20), shr(shift, _bytes))
+
+            //return (add(location, 0x20), 0x20)
+
+            received := shr(shift, _bytes)
+        }
+        return received;
+    }
 }
+// 7800000000000000
+// 1BB60F053F800000000000000000000000000000000000000000000000000000
+// 1BB60F053F80000000000000000000000000000000000000000000000000
+// 1BB60F053F800000000000000000000000000000000000000000000 - 0x24

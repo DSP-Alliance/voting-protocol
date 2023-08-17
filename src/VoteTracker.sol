@@ -158,17 +158,27 @@ contract VoteTracker {
             PowerTypes.MinerRawPowerReturn memory pow = PowerAPI.minerRawPower(uint64(minerId));
             CommonTypes.BigInt memory p = pow.raw_byte_power;
             if (p.neg) {
-                power = 10;
+                power = voter.balance / 1 ether;
             } else {
                 // TODO: Cast bytes to uint256 correctly
                 assembly {
-                    power := mload(add(p, 32))
+                    // Length of the byte array
+                    let length := mload(example)
+
+                    // Load the bytes from the memory slot after the length
+                    // Assuming power is > 32 bytes is okay because 1 PiB 
+                    // is only 1e16
+                    let _bytes := mload(add(example, 0x20))
+                    let shift := mul(sub(0x40, mul(length, 2)), 0x04)
+
+                    // bytes slot will be left aligned 
+                    power := shr(shift, _bytes)
                 }
             }
         } else {
-            // TODO: Fetch user balance as weight;
+            // 1 undenominated filecoin would be equal to 1,000 PiB raw byte power
             // Vote weight as a non-miner
-            power = 10;
+            power = voter.balance / 1 ether;
         }
     }
 
