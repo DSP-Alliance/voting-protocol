@@ -7,6 +7,3 @@
 [submodule "lib/solmate"]
 	path = lib/solmate
 	url = https://github.com/transmissions11/solmate
-[submodule "testing/builtin-actors"]
-	path = testing/builtin-actors
-	url = https://github.com/filecoin-project/builtin-actors
