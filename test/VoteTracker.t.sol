@@ -59,12 +59,9 @@ contract VoteTrackerTest is DSTestPlus {
         //tracker.registerVoter(CommonTypes.FilActorId.wrap(2081040));
     }
 
-    function testToFilActorId() public returns (bytes memory) {
+    function testToFilActorId() public view returns (bytes memory) {
         // this is f410fmhcspsb56aa7teobq5s2awfbpdgfuot6zngijra encoded to hex
         bytes memory addr = hex"6D686373707362353661613774656F62713573326177666270646766756F74367A6E67696A726120";
-
-        // this is actor Id of the above account
-        bytes memory delegatedAddr = abi.encodePacked(uint256(2361681));
 
         // static call to the precompile resolve address
         (bool success, bytes memory raw_response) = address(0xFE00000000000000000000000000000000000001).staticcall(addr);
@@ -73,7 +70,7 @@ contract VoteTrackerTest is DSTestPlus {
         return raw_response;
     }
 
-    function testMinerPowerAPI() public returns (uint256 power) {
+    function testMinerPowerAPI() public view returns (uint256 power) {
         // Vote weight as a miner
         PowerTypes.MinerRawPowerReturn memory pow = PowerAPI.minerRawPower(uint64(1889512));
         CommonTypes.BigInt memory p = pow.raw_byte_power;
@@ -86,7 +83,7 @@ contract VoteTrackerTest is DSTestPlus {
         }
     }
 
-    function testPrecompileCode() public returns (bytes32) {
+    function testPrecompileCode() public view returns (bytes32) {
         address CALL_ACTOR_ADDRESS = 0xfe00000000000000000000000000000000000005;
         bytes32 codehash;
         assembly {
@@ -95,7 +92,7 @@ contract VoteTrackerTest is DSTestPlus {
         return codehash;
     }
 
-    function testMinerCount() public returns (uint256) {
+    function testMinerCount() public view returns (uint256) {
         return PowerAPI.minerCount();
     }
 }

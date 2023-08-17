@@ -9,11 +9,14 @@ w3 = Web3(Web3.HTTPProvider(rpc))
 myAddr = "0x3304a183aE4353CE57f062bcacc1CB2eDED5Ff2b"
 import os
 pk = input("Enter private key: ")
-
+account = w3.eth.account.from_key(str(pk))
+print(account.address)
 factory = "0x46d3f7d2ea08f0114a2f3c50b6ad0fe0c8e3cdf2"
 votetracker = "0xA6fF8b75c8e068d74a279DbacBcFaf4827272d1f"
 
 registerSig = "0x61b6fa72"
+
+exit()
 
 minerId = int(input("Enter minerId: "))
 
@@ -50,4 +53,7 @@ print("confirmed")
 #     'data': '0x040a61C527C83DF001F991C18765A058A178CC5A3A7E'
 # })
 
+# 0000000000000000000000000000000000000000000000000000000000000020
+# 0000000000000000000000000000000000000000000000000000000000000007
+# 11e9980000000000000000000000000000000000000000000000000000000000
 

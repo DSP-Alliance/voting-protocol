@@ -58,6 +58,11 @@ contract VoteTracker {
     /*                        Public Functions                        */
     /******************************************************************/
 
+    function voteAndRegister(uint256 vote, uint64 minerId) public returns (uint256 voteWeight) {
+        voteWeight = registerVoter(minerId);
+        castVote(vote);
+    }
+
     function castVote(uint256 vote) public voting(msg.sender) isRegistered(msg.sender) {
         uint vote_num = vote % 3;
         uint weight = voterWeight[msg.sender];
@@ -130,7 +135,7 @@ contract VoteTracker {
         }
     }
 
-    function toFilAddr(address addr) internal view returns (CommonTypes.FilAddress memory filAddr) {
+    function toFilAddr(address addr) internal pure returns (CommonTypes.FilAddress memory filAddr) {
         bytes memory delegatedAddr = abi.encodePacked(hex"040a", addr);
         filAddr = CommonTypes.FilAddress(delegatedAddr);
     }

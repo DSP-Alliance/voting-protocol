@@ -8,7 +8,7 @@ import "filecoin-solidity/types/CommonTypes.sol";
 import "filecoin-solidity/types/PowerTypes.sol";
 
 contract VoteTester {
-    function minerPower(uint64 minerId) public returns (uint256 power) {
+    function minerPower(uint64 minerId) public view returns (uint256 power) {
         PowerTypes.MinerRawPowerReturn memory pow = PowerAPI.minerRawPower(minerId);
         CommonTypes.BigInt memory p = pow.raw_byte_power;
         assembly {
@@ -16,15 +16,15 @@ contract VoteTester {
         }
     }
 
-    function controllingAddress(uint64 minerId, CommonTypes.FilAddress memory controller) public returns (bool) {
+    function controllingAddress(uint64 minerId, CommonTypes.FilAddress memory controller) public view returns (bool) {
         return MinerAPI.isControllingAddress(CommonTypes.FilActorId.wrap(minerId), controller);
     }
 
-    function resolveEthAddress(address addr) public returns (uint64 minerId) {
+    function resolveEthAddress(address addr) public view returns (uint64 minerId) {
         minerId = PrecompilesAPI.resolveEthAddress(addr);
     }
 
-    function lookupDelegatedAddress(uint64 actorId) public returns (bytes memory) {
+    function lookupDelegatedAddress(uint64 actorId) public view returns (bytes memory) {
         return PrecompilesAPI.lookupDelegatedAddress(actorId);
     }
 }
