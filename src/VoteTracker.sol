@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "./interfaces/GlifFactory.sol";
+import "./interfaces/Owner.sol";
 
 import "filecoin-solidity/MinerAPI.sol";
 import "filecoin-solidity/PowerAPI.sol";
@@ -105,7 +106,7 @@ contract VoteTracker {
             return power;
         }
 
-        bool glif = (glifpool != address(0) && GlifFactory(glifFactory).isAgent(glifpool));
+        bool glif = (GlifFactory(glifFactory).isAgent(glifpool) && Owner(glifpool).owner() == msg.sender);
 
         for (uint i = 0; i < minerIds.length; ++i) {
             uint64 minerId = minerIds[i];
@@ -160,14 +161,15 @@ contract VoteTracker {
             if (p.neg) {
                 power = voter.balance / 1 ether;
             } else {
+                bytes memory rpower = p.val;
                 assembly {
                     // Length of the byte array
-                    let length := mload(example)
+                    let length := mload(rpower)
 
                     // Load the bytes from the memory slot after the length
                     // Assuming power is > 32 bytes is okay because 1 PiB 
                     // is only 1e16
-                    let _bytes := mload(add(example, 0x20))
+                    let _bytes := mload(add(rpower, 0x20))
                     let shift := mul(sub(0x40, mul(length, 2)), 0x04)
 
                     // bytes slot will be left aligned 
