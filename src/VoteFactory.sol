@@ -17,10 +17,10 @@ contract VoteFactory is Owned {
         glifFactory = _glifFactory;
     }
 
-    function startVote(uint32 length, uint64 fipNum, bool doubleYesOption) public onlyOwner returns (address vote) {
+    function startVote(uint32 length, uint64 fipNum, bool doubleYesOption, address[] memory lsdTokens) public onlyOwner returns (address vote) {
         require(FIPnumToAddress[fipNum] == address(0), "Vote already exists for this FIP");
 
-        vote = address(new VoteTracker(length, doubleYesOption, glifFactory));
+        vote = address(new VoteTracker(length, doubleYesOption, glifFactory, lsdTokens));
 
         emit VoteStarted(vote, fipNum, length);
         FIPnumToAddress[fipNum] = vote;

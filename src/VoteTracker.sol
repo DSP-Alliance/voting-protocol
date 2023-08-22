@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import "./interfaces/GlifFactory.sol";
 import "./interfaces/Owner.sol";
+import "./interfaces/ERC20.sol";
 
 import "filecoin-solidity/MinerAPI.sol";
 import "filecoin-solidity/PowerAPI.sol";
@@ -22,6 +23,8 @@ contract VoteTracker {
     uint256 private abstainVotes;
 
     uint256 private yesVoteOption2;
+
+    address[] internal lsdTokens;
 
     mapping (bytes32 => bool) internal hasVoted;
     mapping (address => uint256) internal voterWeight;
@@ -55,11 +58,12 @@ contract VoteTracker {
         _;
     }
 
-    constructor(uint32 length, bool _doubleYesOption, address _glifFactory) {
+    constructor(uint32 length, bool _doubleYesOption, address _glifFactory, address[] memory _lsdTokens) {
         doubleYesOption = _doubleYesOption;
         glifFactory = _glifFactory;
         voteLength = length;
         voteStart = uint32(block.timestamp);
+        lsdTokens = _lsdTokens;
     }
 
     /******************************************************************/
@@ -151,7 +155,7 @@ contract VoteTracker {
         return controlling;
     }
 
-    function voterPower(uint64 minerId, address voter) internal view returns (uint256 power) {
+    function voterPower(uint64 minerId, address voter) internal returns (uint256 power) {
         bool isminer = isMiner(minerId, voter);
 
         if (isminer) {
@@ -179,7 +183,16 @@ contract VoteTracker {
         } else {
             // 1 undenominated filecoin would be equal to 1,000 PiB raw byte power
             // Vote weight as a non-miner
-            power = voter.balance / 1 ether;
+            uint length = lsdTokens.length;
+            for (uint i = 0; i < length; ) {
+                ERC20 token = ERC20(lsdTokens[i]);
+                // a users balance cannot exceed uint256 and realistically won't get close so power won't overflow
+                unchecked {
+                    power += token.balanceOf(voter) / 1 ether;
+                    ++i;
+                }
+            }
+            power += voter.balance / 1 ether;
         }
     }
 
