@@ -13,11 +13,14 @@ contract DeployVoteTracker is Script {
         address deployerAddress = vm.addr(deployerKey);
 
         vm.startBroadcast(deployerKey);
+        address[] memory lsdTokens = new address[](1);
 
         VoteTracker tracker = new VoteTracker(
             7 days,
             false,
-            address(0)
+            address(0),
+            lsdTokens,
+            deployerAddress
         );
 
         vm.stopBroadcast();

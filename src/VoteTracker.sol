@@ -2,7 +2,6 @@
 pragma solidity ^0.8.19;
 
 import "./interfaces/GlifFactory.sol";
-import "./interfaces/Owner.sol";
 import "./interfaces/ERC20.sol";
 
 import "filecoin-solidity/MinerAPI.sol";
@@ -10,7 +9,9 @@ import "filecoin-solidity/PowerAPI.sol";
 import "filecoin-solidity/types/CommonTypes.sol";
 import "filecoin-solidity/types/PowerTypes.sol";
 
-contract VoteTracker {
+import "solmate/auth/Owned.sol";
+
+contract VoteTracker is Owned {
     using CommonTypes for uint64;
 
     uint32 public voteStart;
@@ -58,7 +59,7 @@ contract VoteTracker {
         _;
     }
 
-    constructor(uint32 length, bool _doubleYesOption, address _glifFactory, address[] memory _lsdTokens) {
+    constructor(uint32 length, bool _doubleYesOption, address _glifFactory, address[] memory _lsdTokens, address owner) Owned(owner) {
         doubleYesOption = _doubleYesOption;
         glifFactory = _glifFactory;
         voteLength = length;
@@ -110,7 +111,7 @@ contract VoteTracker {
             return power;
         }
 
-        bool glif = (GlifFactory(glifFactory).isAgent(glifpool) && Owner(glifpool).owner() == msg.sender);
+        bool glif = (GlifFactory(glifFactory).isAgent(glifpool) && Owned(glifpool).owner() == msg.sender);
 
         for (uint i = 0; i < minerIds.length; ++i) {
             uint64 minerId = minerIds[i];

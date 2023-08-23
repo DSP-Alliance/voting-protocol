@@ -27,7 +27,8 @@ contract VoteTrackerTest is DSTestPlus {
         utils = new Utilities();
         users = utils.createUsers(5);
 
-        tracker = new VoteTracker(1 days, false, address(0));
+        address[] memory lsdTokens = new address[](1);
+        tracker = new VoteTracker(1 days, false, address(0), lsdTokens, users[0]);
 
         miners.push(CommonTypes.FilActorId.wrap(1889470));
     }
@@ -100,7 +101,7 @@ contract VoteTrackerTest is DSTestPlus {
         return PowerAPI.minerCount();
     }
 
-    function testBytes(bytes32 _example) public pure returns (uint256) {
+    function testBytes() public pure returns (uint256) {
         bytes memory example = hex"1712B9E147AE141260";
         uint256 received;
 
