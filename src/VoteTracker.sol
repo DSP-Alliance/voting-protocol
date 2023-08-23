@@ -213,4 +213,12 @@ contract VoteTracker is Owned {
             yesVotes += weight;
         }
     }
+
+    function addLSDToken(address token) public onlyOwner {
+        lsdTokens.push(token);
+    }
+    function removeLSDToken(uint index) public onlyOwner {
+        lsdTokens[index] = lsdTokens[lsdTokens.length - 1];
+        lsdTokens.pop();
+    }
 }
