@@ -18,7 +18,6 @@ contract VoteTracker is Owned {
     /*                       Public Storage                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-
     uint32 public voteStart;
     uint32 public voteLength;
 
@@ -45,7 +44,7 @@ contract VoteTracker is Owned {
 
     address[] internal lsdTokens;
 
-    mapping (bytes32 => bool) internal hasVoted;
+    mapping (address => bool) internal hasVoted;
     mapping (address => uint256) internal voterWeightRBP;
     mapping (address => uint256) internal voterWeightToken;
     mapping (uint64 => bool) internal registeredMiner;
@@ -74,15 +73,14 @@ contract VoteTracker is Owned {
     /// @notice Checks if the vote has concluded and if the user has already voted
     /// @param sender The address to check
     modifier voting(address sender) {
-        bytes32 senderHash = keccak256(abi.encodePacked(sender));
-        if (hasVoted[senderHash]) {
+        if (hasVoted[sender]) {
             revert AlreadyVoted();
         }
         if (uint32(block.timestamp) > voteStart + voteLength) {
             revert VoteConcluded();
         }
         _;
-        hasVoted[senderHash] = true;
+        hasVoted[sender] = true;
     }
 
     /// @notice Checks if the sender is a registered voter
@@ -183,11 +181,11 @@ contract VoteTracker is Owned {
             }
 
             // Add their RBP voting weight
-            if (glif) {
-                powerRBP += voterRBP(minerId, glifpool);
-            } else {
-                powerRBP += voterRBP(minerId, msg.sender);
-            }
+            address minerOwner = glif ? glifpool : msg.sender;
+
+            // Set the RBP voting weight
+            powerRBP += voterRBP(minerId, minerOwner);
+
             registeredMiner[minerId] = true;
         }
 
@@ -206,6 +204,7 @@ contract VoteTracker is Owned {
             powerToken += balance / 10**decimals;
         }
 
+        // Finalize state changes
         emit VoterRegistered(msg.sender, minerIds, powerRBP, powerToken);
 
         voterWeightRBP[msg.sender] = powerRBP;
@@ -226,11 +225,7 @@ contract VoteTracker is Owned {
         if (uint32(block.timestamp) < voteStart + voteLength) {
             revert VoteNotConcluded();
         }
-        if (doubleYesOption) {
-            return (yesVotesRBP, yesVoteOption2RBP, noVotesRBP, abstainVotesRBP);
-        } else {
-            return (yesVotesRBP, 0, noVotesRBP, abstainVotesRBP);
-        }
+        return (yesVotesRBP, yesVoteOption2RBP, noVotesRBP, abstainVotesRBP);
     }
 
     /// @notice Returns the vote results
@@ -243,11 +238,7 @@ contract VoteTracker is Owned {
         if (uint32(block.timestamp) < voteStart + voteLength) {
             revert VoteNotConcluded();
         }
-        if (doubleYesOption) {
-            return (yesVotesToken, yesVoteOption2Token, noVotesToken, abstainVotesToken);
-        } else {
-            return (yesVotesToken, 0, noVotesToken, abstainVotesToken);
-        }
+        return (yesVotesToken, yesVoteOption2Token, noVotesToken, abstainVotesToken);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -277,24 +268,26 @@ contract VoteTracker is Owned {
         // Vote weight as a miner
         PowerTypes.MinerRawPowerReturn memory pow = PowerAPI.minerRawPower(uint64(minerId));
         CommonTypes.BigInt memory p = pow.raw_byte_power;
+
         if (p.neg) {
-            power = voter.balance / 1 ether;
-        } else {
-            bytes memory rpower = p.val;
-            assembly {
-                // Length of the byte array
-                let length := mload(rpower)
-
-                // Load the bytes from the memory slot after the length
-                // Assuming power is > 32 bytes is okay because 1 PiB 
-                // is only 1e16
-                let _bytes := mload(add(rpower, 0x20))
-                let shift := mul(sub(0x40, mul(length, 2)), 0x04)
-
-                // bytes slot will be left aligned 
-                power := shr(shift, _bytes)
-            }
+            return 0;
         }
+
+        bytes memory rpower = p.val;
+        assembly {
+            // Length of the byte array
+            let length := mload(rpower)
+
+            // Load the bytes from the memory slot after the length
+            // Assuming power is > 32 bytes is okay because 1 PiB 
+            // is only 1e16
+            let _bytes := mload(add(rpower, 0x20))
+            let shift := mul(sub(0x40, mul(length, 2)), 0x04)
+
+            // bytes slot will be left aligned 
+            power := shr(shift, _bytes)
+        }
+        
     }
 
     /// @notice Converts an address to a filecoin address
