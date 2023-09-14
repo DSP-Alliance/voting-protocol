@@ -40,6 +40,8 @@ contract VoteTracker is Owned {
     error VoteNotConcluded();
     error VoteConcluded();
 
+    /// @notice Checks if the vote has concluded and if the user has already voted
+    /// @param sender The address to check
     modifier voting(address sender) {
         bytes32 senderHash = keccak256(abi.encodePacked(sender));
         if (hasVoted[senderHash]) {
@@ -52,6 +54,8 @@ contract VoteTracker is Owned {
         hasVoted[senderHash] = true;
     }
 
+    /// @notice Checks if the sender is a registered voter
+    /// @param sender The address to check
     modifier isRegistered(address sender) {
         if (voterWeight[sender] == 0) {
             revert NotRegistered();
@@ -59,6 +63,11 @@ contract VoteTracker is Owned {
         _;
     }
 
+    /// @param length The length of the vote in seconds
+    /// @param _doubleYesOption If true, the vote will have two yes options
+    /// @param _glifFactory The address of the glif factory
+    /// @param _lsdTokens The addresses of the LSD tokens to count as voting power
+    /// @param owner The owner of the vote
     constructor(uint32 length, bool _doubleYesOption, address _glifFactory, address[] memory _lsdTokens, address owner) Owned(owner) {
         doubleYesOption = _doubleYesOption;
         glifFactory = _glifFactory;
@@ -71,11 +80,20 @@ contract VoteTracker is Owned {
     /*                        Public Functions                        */
     /******************************************************************/
 
+    /// @notice A combination function of `castVote` and `registerVoter`
+    /// @notice If not registering for a glif pool, pass in address(0)
+    /// @notice If don't have any minerId's pass in an empty list
+    /// @param vote The vote to cast
+    /// @param glifPool The address of the glifpool to register for, address(0) if not using glif pools
+    /// @param minerIds The miner IDs to register for
+    /// @return voteWeight The voting power of the voter
     function voteAndRegister(uint256 vote, address glifPool, uint64[] calldata minerIds) public returns (uint256 voteWeight) {
         voteWeight = registerVoter(glifPool, minerIds);
         castVote(vote);
     }
 
+    /// @notice Msg sender must be a registered voter
+    /// @param vote The vote to cast
     function castVote(uint256 vote) public voting(msg.sender) isRegistered(msg.sender) {
         uint vote_num = vote % 3;
         uint weight = voterWeight[msg.sender];
@@ -94,9 +112,11 @@ contract VoteTracker is Owned {
         emit VoteCast(msg.sender, weight, vote_num);
     }
 
-    /// @param minerIds The miner to register for
     /// @notice Msg sender must be a controlling address for the miner
     /// @notice If not registering for a miner, pass in address(0)
+    /// @param minerIds The miner IDs to register for
+    /// @param glifpool The address of the glifpool to register for, address(0) if not using glif pools
+    /// @return power The voting power of the voter
     function registerVoter(address glifpool, uint64[] calldata minerIds) public returns (uint256 power) {
         if (voterWeight[msg.sender] != 0) {
             revert AlreadyRegistered();
@@ -133,7 +153,13 @@ contract VoteTracker is Owned {
         voterWeight[msg.sender] = power;
     }
 
-    function getVoteResults() public view returns (uint256, uint256, uint256, uint256) {
+    /// @notice Returns the vote results
+    /// @notice Will not return results if the vote is still in progress
+    /// @return yesVotes The number of yes votes
+    /// @return yesVoteOption2 The number of yes votes for the second option, 0 if there is no second option
+    /// @return noVotes The number of no votes
+    /// @return abstainVotes The number of abstain votes
+    function getVoteResults() public view returns (uint256 yesVotes, uint256 yesVoteOption2, uint256 noVotes, uint256 abstainVotes) {
         if (uint32(block.timestamp) < voteStart + voteLength) {
             revert VoteNotConcluded();
         }
@@ -148,14 +174,22 @@ contract VoteTracker is Owned {
     /*                       Miner Verification                       */
     /******************************************************************/
 
-    function isMiner(uint64 minerId, address sender) internal view returns (bool) {
+    /// @notice Checks if an address is a controlling address for a miner
+    /// @param minerId The miner to check
+    /// @param sender The address to check
+    /// @return isMiner True if the address is a controlling address for the miner
+    function isMiner(uint64 minerId, address sender) internal view returns (bool isMiner) {
         if (minerId == 0) {
             return false;
         }
-        bool controlling = MinerAPI.isControllingAddress(CommonTypes.FilActorId.wrap(minerId), toFilAddr(sender));
-        return controlling;
+        isMiner = MinerAPI.isControllingAddress(CommonTypes.FilActorId.wrap(minerId), toFilAddr(sender));
     }
 
+    /// @notice Calculates the voting power of a voter for a single miner
+    /// @notice If voting power is zero, voting power is calculated off of FIL balance and LSD token balances
+    /// @param minerId The miner to calculate voting power for
+    /// @param voter The address of the voter
+    /// @return power The voting power of the voter
     function voterPower(uint64 minerId, address voter) internal returns (uint256 power) {
         bool isminer = isMiner(minerId, voter);
 
@@ -197,6 +231,9 @@ contract VoteTracker is Owned {
         }
     }
 
+    /// @notice Converts an address to a filecoin address
+    /// @param addr The address to convert
+    /// @return filAddr The filecoin address
     function toFilAddr(address addr) internal pure returns (CommonTypes.FilAddress memory filAddr) {
         bytes memory delegatedAddr = abi.encodePacked(hex"040a", addr);
         filAddr = CommonTypes.FilAddress(delegatedAddr);
@@ -214,9 +251,14 @@ contract VoteTracker is Owned {
         }
     }
 
+    /// @notice Adds a token to the list of tokens that are counted as voting power
+    /// @param token The address of the token to add
     function addLSDToken(address token) public onlyOwner {
         lsdTokens.push(token);
     }
+
+    /// @notice Removes a token from the list of tokens that are counted as voting power
+    /// @param index The index of the token to remove
     function removeLSDToken(uint index) public onlyOwner {
         lsdTokens[index] = lsdTokens[lsdTokens.length - 1];
         lsdTokens.pop();
