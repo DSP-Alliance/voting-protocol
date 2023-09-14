@@ -6,6 +6,7 @@ import {Vm} from "forge-std/Vm.sol";
 import {console} from "./utils/Console.sol";
 import {VoteTracker} from "../src/VoteTracker.sol";
 import {Utilities} from "./utils/Utilities.sol";
+import {ERC20} from "../src/interfaces/ERC20.sol";
 import {CommonTypes} from "filecoin-solidity/types/CommonTypes.sol";
 import {PowerTypes} from "filecoin-solidity/types/PowerTypes.sol";
 import {MinerTypes} from "filecoin-solidity/types/MinerTypes.sol";
@@ -20,6 +21,7 @@ contract VoteTrackerTest is DSTestPlus {
     Utilities internal utils;
     address payable[] internal users;
     CommonTypes.FilActorId[] internal miners;
+    address[] internal lsdTokens;
 
     VoteTracker internal tracker;
 
@@ -27,7 +29,8 @@ contract VoteTrackerTest is DSTestPlus {
         utils = new Utilities();
         users = utils.createUsers(5);
 
-        address[] memory lsdTokens = new address[](1);
+        lsdTokens = new address[](1);
+        lsdTokens[0] = address(0x3C3501E6c353DbaEDDFA90376975Ce7aCe4Ac7a8);
         tracker = new VoteTracker(1 days, false, address(0), lsdTokens, users[0]);
 
         miners.push(CommonTypes.FilActorId.wrap(1889470));
@@ -118,6 +121,57 @@ contract VoteTrackerTest is DSTestPlus {
             received := shr(shift, _bytes)
         }
         return received;
+    }
+    
+    function testVoterPower() public view returns (uint256) {
+        return voterPower(0, users[0]);
+    }
+
+    function voterPower(uint64 minerId, address voter) public view returns (uint256 power) {
+        bool isminer = isMiner(minerId);
+
+        if (isminer) {
+            // Vote weight as a miner
+            CommonTypes.BigInt memory p = CommonTypes.BigInt(hex"1BB60F053F80000000", false);
+            if (p.neg) {
+                power = voter.balance / 1 ether;
+            } else {
+                bytes memory rpower = p.val;
+                assembly {
+                    // Length of the byte array
+                    let length := mload(rpower)
+
+                    // Load the bytes from the memory slot after the length
+                    // Assuming power is > 32 bytes is okay because 1 PiB 
+                    // is only 1e16
+                    let _bytes := mload(add(rpower, 0x20))
+                    let shift := mul(sub(0x40, mul(length, 2)), 0x04)
+
+                    // bytes slot will be left aligned 
+                    power := shr(shift, _bytes)
+                }
+            }
+        } else {
+            // 1 undenominated filecoin would be equal to 1,000 PiB raw byte power
+            // Vote weight as a non-miner
+            assembly {
+                let ptr := lsdTokens.slot
+                let len := sload(ptr)
+                for {let i := 0 } lt(i, len) { i := add(i, 1) } {
+
+                }
+                let m := mload(0x40)
+                mstore(m, sload(add(ptr, 0x02)))
+                return (m, 0x20)
+            }
+        }
+    }
+    function isMiner(uint64 minerId) internal pure returns (bool) {
+        if (minerId == 0) {
+            return false;
+        } else {
+            return true;
+        }
     }
 }
 // 7800000000000000
