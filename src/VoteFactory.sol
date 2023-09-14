@@ -27,6 +27,12 @@ contract VoteFactory is Owned {
     event VoteStarted(address vote, uint64 fipNum, uint32 length);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           Errors                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    error VoteAlreadyExists(uint64 fipNum);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         Constructor                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -46,7 +52,7 @@ contract VoteFactory is Owned {
     /// @param lsdTokens The LSD tokens to use for the vote
     /// @return vote The address of the newly deployed VoteTracker contract
     function startVote(uint32 length, uint64 fipNum, bool doubleYesOption, address[] memory lsdTokens) public onlyOwner returns (address vote) {
-        require(FIPnumToAddress[fipNum] == address(0), "Vote already exists for this FIP");
+        if (FIPnumToAddress[fipNum] != address(0)) revert VoteAlreadyExists(fipNum);
 
         vote = address(new VoteTracker(length, doubleYesOption, glifFactory, lsdTokens, owner));
 
