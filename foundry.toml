@@ -4,3 +4,8 @@ out = "out"
 libs = ["lib"]
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
+chain_id = 314
+optimizer = true
+
+[profile.default.optimizer_details]
+yul = false
