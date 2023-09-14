@@ -14,8 +14,18 @@ import "solmate/auth/Owned.sol";
 contract VoteTracker is Owned {
     using CommonTypes for uint64;
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       Public Storage                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
     uint32 public voteStart;
     uint32 public voteLength;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      Internal Storage                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     bool internal doubleYesOption;
     address immutable glifFactory;
 
@@ -31,14 +41,26 @@ contract VoteTracker is Owned {
     mapping (address => uint256) internal voterWeight;
     mapping (uint64 => bool) internal registeredMiner;
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           Events                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     event VoteCast(address voter, uint256 weight, uint256 vote);
     event VoterRegistered(address voter, uint64[] minerIds, uint256 weight);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           Errors                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     error AlreadyVoted();
     error NotRegistered();
     error AlreadyRegistered();
     error VoteNotConcluded();
     error VoteConcluded();
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          Modifiers                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Checks if the vote has concluded and if the user has already voted
     /// @param sender The address to check
@@ -63,6 +85,10 @@ contract VoteTracker is Owned {
         _;
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         Constructor                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @param length The length of the vote in seconds
     /// @param _doubleYesOption If true, the vote will have two yes options
     /// @param _glifFactory The address of the glif factory
@@ -76,9 +102,9 @@ contract VoteTracker is Owned {
         lsdTokens = _lsdTokens;
     }
 
-    /******************************************************************/
-    /*                        Public Functions                        */
-    /******************************************************************/
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      Public Functions                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice A combination function of `castVote` and `registerVoter`
     /// @notice If not registering for a glif pool, pass in address(0)
@@ -153,6 +179,10 @@ contract VoteTracker is Owned {
         voterWeight[msg.sender] = power;
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       View Functions                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @notice Returns the vote results
     /// @notice Will not return results if the vote is still in progress
     /// @return yesVotes The number of yes votes
@@ -170,9 +200,9 @@ contract VoteTracker is Owned {
         }
     }
 
-    /******************************************************************/
-    /*                       Miner Verification                       */
-    /******************************************************************/
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     Internal Functions                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Checks if an address is a controlling address for a miner
     /// @param minerId The miner to check
@@ -250,6 +280,10 @@ contract VoteTracker is Owned {
             yesVotes += weight;
         }
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       Admin Functions                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Adds a token to the list of tokens that are counted as voting power
     /// @param token The address of the token to add
