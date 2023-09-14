@@ -29,24 +29,33 @@ contract VoteTracker is Owned {
     bool internal doubleYesOption;
     address immutable glifFactory;
 
-    uint256 private yesVotes;
-    uint256 private noVotes;
-    uint256 private abstainVotes;
+    // Note: Tallies are initialized at 1 to save gas and keep warm storage
 
-    uint256 private yesVoteOption2;
+    // Raw Byte Power Tallies
+    uint256 private yesVotesRBP = 1;
+    uint256 private yesVoteOption2RBP = 1;
+    uint256 private noVotesRBP = 1;
+    uint256 private abstainVotesRBP = 1;
+
+    // Token Tallies
+    uint256 private yesVotesToken = 1;
+    uint256 private yesVoteOption2Token = 1;
+    uint256 private noVotesToken = 1;
+    uint256 private abstainVotesToken = 1;
 
     address[] internal lsdTokens;
 
     mapping (bytes32 => bool) internal hasVoted;
-    mapping (address => uint256) internal voterWeight;
+    mapping (address => uint256) internal voterWeightRBP;
+    mapping (address => uint256) internal voterWeightToken;
     mapping (uint64 => bool) internal registeredMiner;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Events                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    event VoteCast(address voter, uint256 weight, uint256 vote);
-    event VoterRegistered(address voter, uint64[] minerIds, uint256 weight);
+    event VoteCast(address voter, uint256 weightRBP, uint256 weightToken, uint256 vote);
+    event VoterRegistered(address voter, uint64[] minerIds, uint256 weightRBP, uint256 weightToken);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Errors                           */
@@ -79,7 +88,7 @@ contract VoteTracker is Owned {
     /// @notice Checks if the sender is a registered voter
     /// @param sender The address to check
     modifier isRegistered(address sender) {
-        if (voterWeight[sender] == 0) {
+        if (voterWeightRBP[sender] == 0 || voterWeightToken[sender] == 0) {
             revert NotRegistered();
         }
         _;
@@ -112,9 +121,10 @@ contract VoteTracker is Owned {
     /// @param vote The vote to cast
     /// @param glifPool The address of the glifpool to register for, address(0) if not using glif pools
     /// @param minerIds The miner IDs to register for
-    /// @return voteWeight The voting power of the voter
-    function voteAndRegister(uint256 vote, address glifPool, uint64[] calldata minerIds) public returns (uint256 voteWeight) {
-        voteWeight = registerVoter(glifPool, minerIds);
+    /// @return voteWeightRBP The voting power of the voter in Raw Byte Power
+    /// @return voteWeightToken The voting power of the voter in FIL and LSD's
+    function voteAndRegister(uint256 vote, address glifPool, uint64[] calldata minerIds) public returns (uint256 voteWeightRBP, uint256 voteWeightToken) {
+        (voteWeightRBP, voteWeightToken) = registerVoter(glifPool, minerIds);
         castVote(vote);
     }
 
@@ -122,43 +132,49 @@ contract VoteTracker is Owned {
     /// @param vote The vote to cast
     function castVote(uint256 vote) public voting(msg.sender) isRegistered(msg.sender) {
         uint vote_num = vote % 3;
-        uint weight = voterWeight[msg.sender];
+        uint weightRBP = voterWeightRBP[msg.sender];
+        uint weightToken = voterWeightToken[msg.sender];
+
+        // YES VOTE
         if (vote_num == 0) {
             if (doubleYesOption) {
-                yesChoice(vote, weight);
+                yesChoice(vote, weightRBP, weightToken);
             } else {
-                yesVotes += weight;
+                yesVotesRBP += weightRBP;
+                yesVotesToken += weightToken;
             }
+
+        // NO VOTE
         } else if (vote_num == 1) {
-            noVotes += weight;
+            noVotesRBP += weightRBP;
+            noVotesToken += weightToken;
+
+        // ABSTAIN VOTE
         } else {
-            abstainVotes += weight;
+            abstainVotesRBP += weightRBP;
+            abstainVotesToken += weightToken;
         }
 
-        emit VoteCast(msg.sender, weight, vote_num);
+        emit VoteCast(msg.sender, weightRBP, weightToken, vote_num);
     }
 
     /// @notice Msg sender must be a controlling address for the miner
     /// @notice If not registering for a miner, pass in address(0)
     /// @param minerIds The miner IDs to register for
     /// @param glifpool The address of the glifpool to register for, address(0) if not using glif pools
-    /// @return power The voting power of the voter
-    function registerVoter(address glifpool, uint64[] calldata minerIds) public returns (uint256 power) {
-        if (voterWeight[msg.sender] != 0) {
+    /// @return powerRBP The voting power in Raw Byte Power of the voter
+    /// @return powerToken The voting power in FIL and LSD's of the voter
+    function registerVoter(address glifpool, uint64[] calldata minerIds) public returns (uint256 powerRBP, uint256 powerToken) {
+        // Do not let user register twice
+        if (voterWeightRBP[msg.sender] != 0 || voterWeightToken[msg.sender] != 0) {
             revert AlreadyRegistered();
         }
 
-        if (minerIds.length == 0) {
-            power = msg.sender.balance;
-
-            emit VoterRegistered(msg.sender, minerIds, power);
-
-            voterWeight[msg.sender] = power;
-            return power;
-        }
-
+        // Determine if glifpool is valid
         bool glif = (GlifFactory(glifFactory).isAgent(glifpool) && Owned(glifpool).owner() == msg.sender);
 
+        // Collect RBP voting weight
+        uint length = minerIds.length;
         for (uint i = 0; i < minerIds.length; ++i) {
             uint64 minerId = minerIds[i];
 
@@ -166,17 +182,34 @@ contract VoteTracker is Owned {
                 continue;
             }
 
+            // Add their RBP voting weight
             if (glif) {
-                power += voterPower(minerId, glifpool);
+                powerRBP += voterRBP(minerId, glifpool);
             } else {
-                power += voterPower(minerId, msg.sender);
+                powerRBP += voterRBP(minerId, msg.sender);
             }
             registeredMiner[minerId] = true;
         }
 
-        emit VoterRegistered(msg.sender, minerIds, power);
+        // Collect FIL voting weight
+        // Note: FIL decimals is 18 so we can divide by 1 ether
+        powerToken += msg.sender.balance / 1 ether;
 
-        voterWeight[msg.sender] = power;
+        // Collect LSD voting weight
+        length = lsdTokens.length;
+        for (uint i = 0; i < length; ++i) {
+            ERC20 token = ERC20(lsdTokens[i]);
+
+            uint balance = token.balanceOf(msg.sender);
+            uint decimals = token.decimals();
+
+            powerToken += balance / 10**decimals;
+        }
+
+        emit VoterRegistered(msg.sender, minerIds, powerRBP, powerToken);
+
+        voterWeightRBP[msg.sender] = powerRBP;
+        voterWeightToken[msg.sender] = powerToken;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -185,18 +218,35 @@ contract VoteTracker is Owned {
 
     /// @notice Returns the vote results
     /// @notice Will not return results if the vote is still in progress
-    /// @return yesVotes The number of yes votes
-    /// @return yesVoteOption2 The number of yes votes for the second option, 0 if there is no second option
-    /// @return noVotes The number of no votes
-    /// @return abstainVotes The number of abstain votes
-    function getVoteResults() public view returns (uint256 yesVotes, uint256 yesVoteOption2, uint256 noVotes, uint256 abstainVotes) {
+    /// @return yesVotesRBP The number of yes votes
+    /// @return yesVoteOption2RBP The number of yes votes for the second option, 0 if there is no second option
+    /// @return noVotesRBP The number of no votes
+    /// @return abstainVotesRBP The number of abstain votes
+    function getVoteResultsRBP() public view returns (uint256, uint256, uint256, uint256) {
         if (uint32(block.timestamp) < voteStart + voteLength) {
             revert VoteNotConcluded();
         }
         if (doubleYesOption) {
-            return (yesVotes, yesVoteOption2, noVotes, abstainVotes);
+            return (yesVotesRBP, yesVoteOption2RBP, noVotesRBP, abstainVotesRBP);
         } else {
-            return (yesVotes, 0, noVotes, abstainVotes);
+            return (yesVotesRBP, 0, noVotesRBP, abstainVotesRBP);
+        }
+    }
+
+    /// @notice Returns the vote results
+    /// @notice Will not return results if the vote is still in progress
+    /// @return yesVotesToken The number of yes votes
+    /// @return yesVoteOption2Token The number of yes votes for the second option, 0 if there is no second option
+    /// @return noVotesToken The number of no votes
+    /// @return abstainVotesToken The number of abstain votes
+    function getVoteResultsToken() public view returns (uint256, uint256, uint256, uint256) {
+        if (uint32(block.timestamp) < voteStart + voteLength) {
+            revert VoteNotConcluded();
+        }
+        if (doubleYesOption) {
+            return (yesVotesToken, yesVoteOption2Token, noVotesToken, abstainVotesToken);
+        } else {
+            return (yesVotesToken, 0, noVotesToken, abstainVotesToken);
         }
     }
 
@@ -208,11 +258,11 @@ contract VoteTracker is Owned {
     /// @param minerId The miner to check
     /// @param sender The address to check
     /// @return isMiner True if the address is a controlling address for the miner
-    function isMiner(uint64 minerId, address sender) internal view returns (bool isMiner) {
+    function isMiner(uint64 minerId, address sender) internal view returns (bool) {
         if (minerId == 0) {
             return false;
         }
-        isMiner = MinerAPI.isControllingAddress(CommonTypes.FilActorId.wrap(minerId), toFilAddr(sender));
+        return MinerAPI.isControllingAddress(CommonTypes.FilActorId.wrap(minerId), toFilAddr(sender));
     }
 
     /// @notice Calculates the voting power of a voter for a single miner
@@ -220,44 +270,30 @@ contract VoteTracker is Owned {
     /// @param minerId The miner to calculate voting power for
     /// @param voter The address of the voter
     /// @return power The voting power of the voter
-    function voterPower(uint64 minerId, address voter) internal returns (uint256 power) {
+    function voterRBP(uint64 minerId, address voter) internal view returns (uint256 power) {
         bool isminer = isMiner(minerId, voter);
-
-        if (isminer) {
-            // Vote weight as a miner
-            PowerTypes.MinerRawPowerReturn memory pow = PowerAPI.minerRawPower(uint64(minerId));
-            CommonTypes.BigInt memory p = pow.raw_byte_power;
-            if (p.neg) {
-                power = voter.balance / 1 ether;
-            } else {
-                bytes memory rpower = p.val;
-                assembly {
-                    // Length of the byte array
-                    let length := mload(rpower)
-
-                    // Load the bytes from the memory slot after the length
-                    // Assuming power is > 32 bytes is okay because 1 PiB 
-                    // is only 1e16
-                    let _bytes := mload(add(rpower, 0x20))
-                    let shift := mul(sub(0x40, mul(length, 2)), 0x04)
-
-                    // bytes slot will be left aligned 
-                    power := shr(shift, _bytes)
-                }
-            }
+        if (!isminer) return 0;
+        
+        // Vote weight as a miner
+        PowerTypes.MinerRawPowerReturn memory pow = PowerAPI.minerRawPower(uint64(minerId));
+        CommonTypes.BigInt memory p = pow.raw_byte_power;
+        if (p.neg) {
+            power = voter.balance / 1 ether;
         } else {
-            // 1 undenominated filecoin would be equal to 1,000 PiB raw byte power
-            // Vote weight as a non-miner
-            uint length = lsdTokens.length;
-            for (uint i = 0; i < length; ) {
-                ERC20 token = ERC20(lsdTokens[i]);
-                // a users balance cannot exceed uint256 and realistically won't get close so power won't overflow
-                unchecked {
-                    power += token.balanceOf(voter) / 1 ether;
-                    ++i;
-                }
+            bytes memory rpower = p.val;
+            assembly {
+                // Length of the byte array
+                let length := mload(rpower)
+
+                // Load the bytes from the memory slot after the length
+                // Assuming power is > 32 bytes is okay because 1 PiB 
+                // is only 1e16
+                let _bytes := mload(add(rpower, 0x20))
+                let shift := mul(sub(0x40, mul(length, 2)), 0x04)
+
+                // bytes slot will be left aligned 
+                power := shr(shift, _bytes)
             }
-            power += voter.balance / 1 ether;
         }
     }
 
@@ -271,13 +307,15 @@ contract VoteTracker is Owned {
 
     /// @notice If this vote has two yes options then this function will put it in the correct category
     /// @notice This function should only be called if the vote param modulo 3 == 0
-    function yesChoice(uint256 vote, uint256 weight) internal {
+    function yesChoice(uint256 vote, uint256 weightRBP, uint256 weightToken) internal {
         uint option = vote % 6;
         // Option should only result in 0 or 3
         if (option >= 3) {
-            yesVoteOption2 += weight;
+            yesVoteOption2RBP += weightRBP;
+            yesVoteOption2Token += weightToken;
         } else {
-            yesVotes += weight;
+            yesVotesRBP += weightRBP;
+            yesVotesToken += weightToken;
         }
     }
 
