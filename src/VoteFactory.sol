@@ -5,18 +5,46 @@ import "./VoteTracker.sol";
 import "solmate/auth/Owned.sol";
 
 contract VoteFactory is Owned {
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      Internal Storage                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     address immutable glifFactory;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       Public Storage                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     address[] public deployedVotes;
 
     mapping (uint64 => address) public FIPnumToAddress;
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           Events                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     event VoteStarted(address vote, uint64 fipNum, uint32 length);
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         Constructor                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @param _glifFactory The address of the GlifFactory contract
     constructor(address _glifFactory) Owned(msg.sender) {
         glifFactory = _glifFactory;
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       Admin Function                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Deploys a new VoteTracker contract
+    /// @param length The length of the vote in seconds
+    /// @param fipNum The FIP number that this vote is for
+    /// @param doubleYesOption Whether or not to include two yes options
+    /// @param lsdTokens The LSD tokens to use for the vote
+    /// @return vote The address of the newly deployed VoteTracker contract
     function startVote(uint32 length, uint64 fipNum, bool doubleYesOption, address[] memory lsdTokens) public onlyOwner returns (address vote) {
         require(FIPnumToAddress[fipNum] == address(0), "Vote already exists for this FIP");
 
