@@ -36,6 +36,12 @@ contract VoteTracker is Owned {
     uint256 private noVotesRBP = 1;
     uint256 private abstainVotesRBP = 1;
 
+    // Miner Token Tally
+    uint256 private yesVotesMinerToken = 1;
+    uint256 private yesVoteOption2MinerToken = 1;
+    uint256 private noVotesMinerToken = 1;
+    uint256 private abstainVotesMinerToken = 1;
+
     // Token Tallies
     uint256 private yesVotesToken = 1;
     uint256 private yesVoteOption2Token = 1;
@@ -44,9 +50,10 @@ contract VoteTracker is Owned {
 
     address[] internal lsdTokens;
 
-    mapping (address => bool) internal hasVoted;
     mapping (address => uint256) internal voterWeightRBP;
+    mapping (address => uint256) internal voterWeightMinerToken;
     mapping (address => uint256) internal voterWeightToken;
+    mapping (address => bool) internal hasVoted;
     mapping (uint64 => bool) internal registeredMiner;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -131,12 +138,13 @@ contract VoteTracker is Owned {
     function castVote(uint256 vote) public voting(msg.sender) isRegistered(msg.sender) {
         uint vote_num = vote % 3;
         uint weightRBP = voterWeightRBP[msg.sender];
+        uint weightMinerToken = voterWeightMinerToken[msg.sender];
         uint weightToken = voterWeightToken[msg.sender];
 
         // YES VOTE
         if (vote_num == 0) {
             if (doubleYesOption) {
-                yesChoice(vote, weightRBP, weightToken);
+                yesChoice(vote, weightRBP, weightMinerToken, weightToken);
             } else {
                 yesVotesRBP += weightRBP;
                 yesVotesToken += weightToken;
@@ -145,11 +153,13 @@ contract VoteTracker is Owned {
         // NO VOTE
         } else if (vote_num == 1) {
             noVotesRBP += weightRBP;
+            noVotesMinerToken += weightMinerToken;
             noVotesToken += weightToken;
 
         // ABSTAIN VOTE
         } else {
             abstainVotesRBP += weightRBP;
+            abstainVotesMinerToken += weightMinerToken;
             abstainVotesToken += weightToken;
         }
 
@@ -190,8 +200,7 @@ contract VoteTracker is Owned {
         }
 
         // Collect FIL voting weight
-        // Note: FIL decimals is 18 so we can divide by 1 ether
-        powerToken += msg.sender.balance / 1 ether;
+        powerToken += msg.sender.balance;
 
         // Collect LSD voting weight
         length = lsdTokens.length;
@@ -199,16 +208,23 @@ contract VoteTracker is Owned {
             ERC20 token = ERC20(lsdTokens[i]);
 
             uint balance = token.balanceOf(msg.sender);
-            uint decimals = token.decimals();
 
-            powerToken += balance / 10**decimals;
+            powerToken += balance;
         }
 
         // Finalize state changes
         emit VoterRegistered(msg.sender, minerIds, powerRBP, powerToken);
 
         voterWeightRBP[msg.sender] = powerRBP;
-        voterWeightToken[msg.sender] = powerToken;
+
+        // If they have RBP then assign their token power to the miner's
+        if (powerRBP > 0) {
+            voterWeightMinerToken[msg.sender] = powerToken;
+        
+        // If they have no RBP then assign to normal token category
+        } else {
+            voterWeightToken[msg.sender] = powerToken;
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -226,6 +242,19 @@ contract VoteTracker is Owned {
             revert VoteNotConcluded();
         }
         return (yesVotesRBP, yesVoteOption2RBP, noVotesRBP, abstainVotesRBP);
+    }
+
+    /// @notice Returns the vote results
+    /// @notice Will not return results if the vote is still in progress
+    /// @return yesVotesMinerToken The number of yes votes
+    /// @return yesVoteOption2MinerToken The number of yes votes for the second option, 0 if there is no second option
+    /// @return noVotesMinerToken The number of no votes
+    /// @return abstainVotesMinerToken The number of abstain votes
+    function getVoteResultsMinerToken() public view returns (uint256, uint256, uint256, uint256) {
+        if (uint32(block.timestamp) < voteStart + voteLength) {
+            revert VoteNotConcluded();
+        }
+        return (yesVotesMinerToken, yesVoteOption2MinerToken, noVotesMinerToken, abstainVotesMinerToken);
     }
 
     /// @notice Returns the vote results
@@ -300,14 +329,16 @@ contract VoteTracker is Owned {
 
     /// @notice If this vote has two yes options then this function will put it in the correct category
     /// @notice This function should only be called if the vote param modulo 3 == 0
-    function yesChoice(uint256 vote, uint256 weightRBP, uint256 weightToken) internal {
+    function yesChoice(uint256 vote, uint256 weightRBP, uint256 weightMinerToken, uint256 weightToken) internal {
         uint option = vote % 6;
         // Option should only result in 0 or 3
         if (option >= 3) {
             yesVoteOption2RBP += weightRBP;
+            yesVoteOption2MinerToken += weightMinerToken;
             yesVoteOption2Token += weightToken;
         } else {
             yesVotesRBP += weightRBP;
+            yesVotesMinerToken += weightMinerToken;
             yesVotesToken += weightToken;
         }
     }
