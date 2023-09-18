@@ -1,11 +1,33 @@
 [profile.default]
-src = "src"
-out = "out"
-libs = ["lib"]
+src = 'src'
+out = 'out'
+libs = ['lib', 'shim/Mock']
+solc_version = "0.8.19"
+remappings = [
+  "ds-test/=lib/forge-std/lib/ds-test/src/",
+  "forge-std/=lib/forge-std/src/",
+  "solmate/=lib/solmate/src/",
+  "filecoin-solidity/=lib/filecoin-solidity/contracts/v0.8/",
+  "src/=src/",
+  "shim/=shim/Mock/"
+]
+
+[profile.fevm]
+src = 'src'
+out = 'out-fevm'
+libs = ['lib', 'shim/FEVM']
+solc_version = "0.8.17"
+remappings = [
+  "ds-test/=lib/forge-std/lib/ds-test/src/",
+  "forge-std/=lib/forge-std/src/",
+  "solmate/=lib/solmate/src/",
+  "filecoin-solidity/=lib/filecoin-solidity/contracts/v0.8/",
+  "src/=src/",
+  "shim/=shim/FEVM/",
+]
+optimizer_details.yul = false
+
+[fuzz]
+runs = 1024
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
-chain_id = 314
-optimizer = true
-
-[profile.default.optimizer_details]
-yul = false
