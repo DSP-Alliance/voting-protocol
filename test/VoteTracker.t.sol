@@ -33,7 +33,7 @@ contract VoteTrackerTest is DSTestPlus {
 
         lsdTokens = new address[](1);
         lsdTokens[0] = address(0x3C3501E6c353DbaEDDFA90376975Ce7aCe4Ac7a8);
-        tracker = new VoteTracker(1 days, false, address(0x526Ab27Af261d28c2aC1fD24f63CcB3bd44D50e0), lsdTokens, users[0]);
+        tracker = new VoteTracker(1 days, false, address(0x526Ab27Af261d28c2aC1fD24f63CcB3bd44D50e0), lsdTokens, 0, users[0]);
 
         miners.push(CommonTypes.FilActorId.wrap(1889470));
     }

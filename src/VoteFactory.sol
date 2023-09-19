@@ -54,7 +54,7 @@ contract VoteFactory is Owned {
     function startVote(uint32 length, uint64 fipNum, bool doubleYesOption, address[] memory lsdTokens) public onlyOwner returns (address vote) {
         if (FIPnumToAddress[fipNum] != address(0)) revert VoteAlreadyExists(fipNum);
 
-        vote = address(new VoteTracker(length, doubleYesOption, glifFactory, lsdTokens, owner));
+        vote = address(new VoteTracker(length, doubleYesOption, glifFactory, lsdTokens, fipNum, owner));
 
         emit VoteStarted(vote, fipNum, length);
         FIPnumToAddress[fipNum] = vote;
