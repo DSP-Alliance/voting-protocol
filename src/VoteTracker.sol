@@ -4,8 +4,8 @@ pragma solidity ^0.8.19;
 import "./interfaces/GlifFactory.sol";
 import "./interfaces/ERC20.sol";
 
-import "filecoin-solidity/MinerAPI.sol";
-import "filecoin-solidity/PowerAPI.sol";
+import "shim/MinerAPI.sol";
+import "shim/PowerAPI.sol";
 import "filecoin-solidity/types/CommonTypes.sol";
 import "filecoin-solidity/types/PowerTypes.sol";
 
@@ -174,7 +174,7 @@ contract VoteTracker is Owned {
     /// @return powerToken The voting power in FIL and LSD's of the voter
     function registerVoter(address glifpool, uint64[] calldata minerIds) public returns (uint256 powerRBP, uint256 powerToken) {
         // Do not let user register twice
-        if (voterWeightRBP[msg.sender] != 0 || voterWeightToken[msg.sender] != 0) {
+        if (voterWeightRBP[msg.sender] > 0 || voterWeightToken[msg.sender] > 0) {
             revert AlreadyRegistered();
         }
 
