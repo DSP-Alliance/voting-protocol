@@ -18,19 +18,19 @@ contract VoteFactory is Owned {
 
     address[] public deployedVotes;
 
-    mapping (uint64 => address) public FIPnumToAddress;
+    mapping (uint32 => address) public FIPnumToAddress;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Events                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    event VoteStarted(address vote, uint64 fipNum, uint32 length);
+    event VoteStarted(address vote, uint32 fipNum, uint32 length);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Errors                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    error VoteAlreadyExists(uint64 fipNum);
+    error VoteAlreadyExists(uint32 fipNum);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         Constructor                        */
@@ -51,7 +51,7 @@ contract VoteFactory is Owned {
     /// @param doubleYesOption Whether or not to include two yes options
     /// @param lsdTokens The LSD tokens to use for the vote
     /// @return vote The address of the newly deployed VoteTracker contract
-    function startVote(uint32 length, uint64 fipNum, bool doubleYesOption, address[] memory lsdTokens) public onlyOwner returns (address vote) {
+    function startVote(uint32 length, uint32 fipNum, bool doubleYesOption, address[] memory lsdTokens) public onlyOwner returns (address vote) {
         if (FIPnumToAddress[fipNum] != address(0)) revert VoteAlreadyExists(fipNum);
 
         vote = address(new VoteTracker(length, doubleYesOption, glifFactory, lsdTokens, fipNum, owner));

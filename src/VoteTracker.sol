@@ -26,8 +26,8 @@ contract VoteTracker is Owned {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     bool internal doubleYesOption;
+    uint32 immutable FIP;
     address immutable glifFactory;
-    uint64 immutable FIP;
 
     // Note: Tallies are initialized at 1 to save gas and keep warm storage
 
@@ -135,7 +135,7 @@ contract VoteTracker is Owned {
         bool _doubleYesOption,
         address _glifFactory,
         address[] memory _lsdTokens,
-        uint64 _FIP,
+        uint32 _FIP,
         address owner
     ) Owned(owner) {
         doubleYesOption = _doubleYesOption;

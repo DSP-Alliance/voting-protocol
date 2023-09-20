@@ -9,7 +9,8 @@ remappings = [
   "solmate/=lib/solmate/src/",
   "filecoin-solidity/=lib/filecoin-solidity/contracts/v0.8/",
   "src/=src/",
-  "shim/=shim/Mock/"
+  "shim/=shim/Mock/",
+  "interfaces/=src/interfaces/"
 ]
 
 [profile.fevm]
@@ -24,8 +25,12 @@ remappings = [
   "filecoin-solidity/=lib/filecoin-solidity/contracts/v0.8/",
   "src/=src/",
   "shim/=shim/FEVM/",
+  "interfaces/=src/interfaces/"
 ]
 optimizer_details.yul = false
+
+[rpc_endpoints]
+filecoin = "https://api.node.glif.io/"
 
 [fuzz]
 runs = 1024
