@@ -2,9 +2,9 @@
 pragma solidity >=0.8.0;
 
 import "forge-std/Script.sol";
-import "../src/VoteTracker.sol";
+import "../src/VoteFactory.sol";
 
-contract DeployVoteTracker is Script {
+contract DeployVoteFactory is Script {
     
     function setUp() public {}
 
@@ -13,19 +13,14 @@ contract DeployVoteTracker is Script {
         address deployerAddress = vm.addr(deployerKey);
 
         vm.startBroadcast(deployerKey);
-        address[] memory lsdTokens = new address[](1);
+        // This is the STFIL token
+        //address[1] memory lsdTokens = [address(0x3C3501E6c353DbaEDDFA90376975Ce7aCe4Ac7a8)];
 
-        VoteTracker tracker = new VoteTracker(
-            7 days,
-            false,
-            address(0),
-            lsdTokens,
-            deployerAddress
-        );
+        VoteFactory factory = new VoteFactory(address(0x526Ab27Af261d28c2aC1fD24f63CcB3bd44D50e0));
 
         vm.stopBroadcast();
 
-        console.log("HustleBot deployed at: ", address(tracker));
+        console.log("Factory deployed at: ", address(factory));
         console.log("Deployer Address: ", deployerAddress);
     }
 }

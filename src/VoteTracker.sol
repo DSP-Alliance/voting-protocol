@@ -26,7 +26,7 @@ contract VoteTracker is Owned {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     bool internal doubleYesOption;
-    uint32 immutable FIP;
+    uint32 immutable public FIP;
     address immutable glifFactory;
 
     // Note: Tallies are initialized at 1 to save gas and keep warm storage
@@ -115,7 +115,7 @@ contract VoteTracker is Owned {
     /// @notice Checks if the sender is a registered voter
     /// @param sender The address to check
     modifier isRegistered(address sender) {
-        if (voterWeightRBP[sender] == 0 || voterWeightToken[sender] == 0) {
+        if (voterWeightRBP[sender] == 0 && voterWeightToken[sender] == 0 && voterWeightMinerToken[sender] == 0) {
             revert NotRegistered();
         }
         _;
@@ -183,6 +183,7 @@ contract VoteTracker is Owned {
                 yesChoice(vote, weightRBP, weightMinerToken, weightToken);
             } else {
                 yesVotesRBP += weightRBP;
+                yesVotesMinerToken += weightMinerToken;
                 yesVotesToken += weightToken;
             }
 
@@ -283,13 +284,11 @@ contract VoteTracker is Owned {
                 uint noRBP,
                 uint abstainRBP
             ) = getVoteResultsRBP();
-            if (yesRBP > noRBP && yesRBP > abstainRBP) {
-                // Win for yes RBP
-                if (doubleYesOption && yes2RBP > yesRBP) {
-                    rbp = Vote.Yes2;
-                } else {
-                    rbp = Vote.Yes;
-                }
+
+            if (yesRBP > noRBP && yesRBP > abstainRBP && yesRBP > yes2RBP) {
+                rbp = Vote.Yes;
+            } else if (yes2RBP > noRBP && yes2RBP > abstainRBP) {
+                rbp = Vote.Yes2;
             } else if (noRBP > abstainRBP) {
                 // Win for no RBP
                 rbp = Vote.No;
@@ -321,14 +320,13 @@ contract VoteTracker is Owned {
             uint yes2TokenVotes = yes2Token + yes2MinerToken;
             if (
                 yesTokenVotes > noTokenVotes &&
-                yesTokenVotes > abstainTokenVotes
+                yesTokenVotes > abstainTokenVotes &&
+                yesTokenVotes > yes2TokenVotes
             ) {
                 // Win for yes Miner Token
-                if (doubleYesOption && yes2MinerToken > yesTokenVotes) {
-                    token = Vote.Yes2;
-                } else {
-                    token = Vote.Yes;
-                }
+                token = Vote.Yes;
+            } else if (yes2TokenVotes > noTokenVotes && yes2TokenVotes > abstainTokenVotes) {
+                token = Vote.Yes2;
             } else if (noTokenVotes > abstainTokenVotes) {
                 // Win for no Miner Token
                 token = Vote.No;
