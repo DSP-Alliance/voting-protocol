@@ -24,8 +24,6 @@ contract VoteTrackerTest is DSTestPlus {
 
     VoteTracker internal tracker;
 
-    uint256 constant defaultRBP = 511180800000000000000;
-
     address constant GLIFOWNER = address(0x674Aaf6777D9783accdF9DBb45cbFe87E308Fc73);
     address constant GLIFPOOL = address(0x3d9B87FA76f37e12748162348C86D5294c469c4D);
     address constant GLIFFACTORY = address(0x526Ab27Af261d28c2aC1fD24f63CcB3bd44D50e0);
@@ -112,7 +110,7 @@ contract VoteTrackerTest is DSTestPlus {
 
         vm.prank(user);
         (uint powerRBP, uint powerToken) = tracker.registerVoter(address(0), minerIds);
-        assertEq(powerRBP, defaultRBP);
+        assertGt(powerRBP, 0);
         assertEq(powerToken, user.balance);
     }
 
@@ -124,7 +122,7 @@ contract VoteTrackerTest is DSTestPlus {
 
         vm.prank(user);
         (uint powerRBP, uint powerToken) = tracker.registerVoter(address(0), minerIds);
-        assertEq(powerRBP, defaultRBP);
+        assertGt(powerRBP, 0);
         assertEq(powerToken, user.balance);
 
         vm.prank(user);
@@ -141,7 +139,7 @@ contract VoteTrackerTest is DSTestPlus {
 
         vm.prank(user);
         (uint powerRBP, uint powerToken) = tracker.registerVoter(address(0), minerIds);
-        assertEq(powerRBP, defaultRBP * 2);
+        assertGt(powerRBP, 0);
         assertEq(powerToken, user.balance);
     }
 
@@ -152,7 +150,7 @@ contract VoteTrackerTest is DSTestPlus {
 
         vm.prank(user);
         (uint powerRBP, uint powerToken) = tracker.registerVoter(GLIFPOOL, minerIds);
-        assertEq(powerRBP, defaultRBP * 8);
+        assertGt(powerRBP, 0);
         assertEq(powerToken, user.balance);
     }
 
@@ -164,7 +162,7 @@ contract VoteTrackerTest is DSTestPlus {
 
         vm.prank(user);
         (uint powerRBP, uint powerToken) = tracker.registerVoter(GLIFPOOL, minerIds);
-        assertEq(powerRBP, defaultRBP * 8);
+        assertGt(powerRBP, 0);
         assertEq(powerToken, user.balance);
 
         vm.prank(user);
@@ -175,118 +173,118 @@ contract VoteTrackerTest is DSTestPlus {
 
     /**************************** Voting ****************************/
 
-    function testVoteNormal() public {
+    function testVoteNormal(uint256 vote) public {
         address user = users[0];
 
         registerNormal(user);
 
         vm.prank(user);
-        tracker.castVote(YESVOTE);
+        tracker.castVote(yesVote(vote));
     }
 
-    function testVoteGlif() public {
+    function testVoteGlif(uint256 vote) public {
         address user = GLIFOWNER;
 
         registerGlif(user);
 
         vm.prank(user);
-        tracker.castVote(YESVOTE);
+        tracker.castVote(yesVote(vote));
     }
 
-    function testVotePersonalMiner() public {
+    function testVotePersonalMiner(uint256 vote, uint256 randomRBP) public {
         address user = users[0];
 
-        registerPersonalMiner(user);
+        registerPersonalMiner(user, randomRBP);
 
         vm.prank(user);
-        tracker.castVote(YESVOTE);
+        tracker.castVote(yesVote(vote));
     }
 
-    function testVoteTwice() public {
+    function testVoteTwice(uint256 vote) public {
         address user = users[0];
 
         registerNormal(user);
 
         vm.prank(user);
-        tracker.castVote(YESVOTE);
+        tracker.castVote(yesVote(vote));
 
         vm.prank(user);
         vm.expectRevert(VoteTracker.AlreadyVoted.selector);
-        tracker.castVote(YESVOTE);
+        tracker.castVote(yesVote(vote));
     }
 
-    function testVoteTwiceGlif() public {
+    function testVoteTwiceGlif(uint256 vote) public {
         address user = GLIFOWNER;
 
         registerGlif(user);
 
         vm.prank(user);
-        tracker.castVote(YESVOTE);
+        tracker.castVote(yesVote(vote));
 
         vm.prank(user);
         vm.expectRevert(VoteTracker.AlreadyVoted.selector);
-        tracker.castVote(YESVOTE);
+        tracker.castVote(yesVote(vote));
     }
 
-    function testVoteTwicePersonalMiner() public {
+    function testVoteTwicePersonalMiner(uint256 vote, uint256 randomRBP) public {
         address user = users[0];
 
-        registerPersonalMiner(user);
+        registerPersonalMiner(user, randomRBP);
 
         vm.prank(user);
-        tracker.castVote(YESVOTE);
+        tracker.castVote(yesVote(vote));
 
         vm.prank(user);
         vm.expectRevert(VoteTracker.AlreadyVoted.selector);
-        tracker.castVote(YESVOTE);
+        tracker.castVote(yesVote(vote));
     }
 
-    function testVoteTwiceDifferent() public {
+    function testVoteTwiceDifferent(uint256 vote) public {
         address user = users[0];
 
         registerNormal(user);
 
         vm.prank(user);
-        tracker.castVote(YESVOTE);
+        tracker.castVote(yesVote(vote));
 
         vm.prank(user);
         vm.expectRevert(VoteTracker.AlreadyVoted.selector);
-        tracker.castVote(NOVOTE);
+        tracker.castVote(noVote(vote));
     }
 
-    function testVoteTwiceDifferentGlif() public {
+    function testVoteTwiceDifferentGlif(uint256 vote) public {
         address user = GLIFOWNER;
 
         registerGlif(user);
 
         vm.prank(user);
-        tracker.castVote(YESVOTE);
+        tracker.castVote(yesVote(vote));
 
         vm.prank(user);
         vm.expectRevert(VoteTracker.AlreadyVoted.selector);
-        tracker.castVote(NOVOTE);
+        tracker.castVote(noVote(vote));
     }
 
-    function testVoteTwiceDifferentPersonalMiner() public {
+    function testVoteTwiceDifferentPersonalMiner(uint256 vote, uint256 randomRBP) public {
         address user = users[0];
 
-        registerPersonalMiner(user);
+        registerPersonalMiner(user, randomRBP);
 
         vm.prank(user);
-        tracker.castVote(YESVOTE);
+        tracker.castVote(yesVote(vote));
 
         vm.prank(user);
         vm.expectRevert(VoteTracker.AlreadyVoted.selector);
-        tracker.castVote(NOVOTE);
+        tracker.castVote(noVote(vote));
     }
 
-    function testVoteResultsTooEarly() public {
+    function testVoteResultsTooEarly(uint256 vote) public {
         address user = users[0];
 
         registerNormal(user);
 
         vm.prank(user);
-        tracker.castVote(YESVOTE);
+        tracker.castVote(yesVote(vote));
 
         vm.expectRevert(VoteTracker.VoteNotConcluded.selector);
         tracker.getVoteResultsToken();
@@ -300,10 +298,10 @@ contract VoteTrackerTest is DSTestPlus {
 
     /************************ Checking Results ******************************/
 
-    function testVoteYesToken() public {
+    function testVoteYesToken(uint256 vote) public {
         address user = users[0];
 
-        registerVoteNormal(user, YESVOTE);
+        registerVoteNormal(user, yes1Vote(vote));
         vm.warp(block.timestamp + 1 days); 
 
         (uint256 yes, uint256 yes2, uint256 no, uint256 abstain) = tracker.getVoteResultsToken();
@@ -313,10 +311,10 @@ contract VoteTrackerTest is DSTestPlus {
         assertEq(abstain, 1);
     }
 
-    function testVoteYes2Token() public {
+    function testVoteYes2Token(uint256 vote) public {
         address user = users[0];
 
-        registerVoteNormal(user, YES2VOTE);
+        registerVoteNormal(user, yes2Vote(vote));
         vm.warp(block.timestamp + 1 days); 
 
         (uint256 yes, uint256 yes2, uint256 no, uint256 abstain) = tracker.getVoteResultsToken();
@@ -326,10 +324,10 @@ contract VoteTrackerTest is DSTestPlus {
         assertEq(abstain, 1);
     }
 
-    function testVoteNoToken() public {
+    function testVoteNoToken(uint256 vote) public {
         address user = users[0];
 
-        registerVoteNormal(user, NOVOTE);
+        registerVoteNormal(user, noVote(vote));
         vm.warp(block.timestamp + 1 days); 
 
         (uint256 yes, uint256 yes2, uint256 no, uint256 abstain) = tracker.getVoteResultsToken();
@@ -339,10 +337,10 @@ contract VoteTrackerTest is DSTestPlus {
         assertEq(abstain, 1);
     }
 
-    function testVoteAbstainToken() public {
+    function testVoteAbstainToken(uint256 vote) public {
         address user = users[0];
 
-        registerVoteNormal(user, ABSTAINVOTE);
+        registerVoteNormal(user, abstainVote(vote));
         vm.warp(block.timestamp + 1 days); 
 
         (uint256 yes, uint256 yes2, uint256 no, uint256 abstain) = tracker.getVoteResultsToken();
@@ -352,62 +350,62 @@ contract VoteTrackerTest is DSTestPlus {
         assertEq(abstain, user.balance + 1);
     }
 
-    function testVoteYesRBP() public {
+    function testVoteYesRBP(uint256 vote, uint256 randomRBP) public {
         address user = users[0];
 
-        registerVotePersonalMiner(user, YESVOTE);
+        registerVotePersonalMiner(user, yes1Vote(vote), randomRBP);
         vm.warp(block.timestamp + 1 days); 
 
         (uint256 yes, uint256 yes2, uint256 no, uint256 abstain) = tracker.getVoteResultsRBP();
-        assertEq(yes, defaultRBP + 1);
+        assertGt(yes, 1);
         assertEq(yes2, 1);
         assertEq(no, 1);
         assertEq(abstain, 1);
     }
 
-    function testVoteYes2RBP() public {
+    function testVoteYes2RBP(uint256 vote, uint256 randomRBP) public {
         address user = users[0];
 
-        registerVotePersonalMiner(user, YES2VOTE);
+        registerVotePersonalMiner(user, yes2Vote(vote), randomRBP);
         vm.warp(block.timestamp + 1 days); 
 
         (uint256 yes, uint256 yes2, uint256 no, uint256 abstain) = tracker.getVoteResultsRBP();
         assertEq(yes, 1);
-        assertEq(yes2, defaultRBP + 1);
+        assertGt(yes2, 1);
         assertEq(no, 1);
         assertEq(abstain, 1);
     }
 
-    function testVoteNoRBP() public {
+    function testVoteNoRBP(uint256 vote, uint256 randomRBP) public {
         address user = users[0];
 
-        registerVotePersonalMiner(user, NOVOTE);
+        registerVotePersonalMiner(user, noVote(vote), randomRBP);
         vm.warp(block.timestamp + 1 days); 
 
         (uint256 yes, uint256 yes2, uint256 no, uint256 abstain) = tracker.getVoteResultsRBP();
         assertEq(yes, 1);
         assertEq(yes2, 1);
-        assertEq(no, defaultRBP + 1);
+        assertGt(no, 1);
         assertEq(abstain, 1);
     }
 
-    function testVoteAbstainRBP() public {
+    function testVoteAbstainRBP(uint256 vote, uint256 randomRBP) public {
         address user = users[0];
 
-        registerVotePersonalMiner(user, ABSTAINVOTE);
+        registerVotePersonalMiner(user, abstainVote(vote), randomRBP);
         vm.warp(block.timestamp + 1 days); 
 
         (uint256 yes, uint256 yes2, uint256 no, uint256 abstain) = tracker.getVoteResultsRBP();
         assertEq(yes, 1);
         assertEq(yes2, 1);
         assertEq(no, 1);
-        assertEq(abstain, defaultRBP + 1);
+        assertGt(abstain, 1);
     }
 
-    function testVoteYesMinerToken() public {
+    function testVoteYesMinerToken(uint256 vote, uint256 randomRBP) public {
         address user = users[0];
 
-        registerVotePersonalMiner(user, YESVOTE);
+        registerVotePersonalMiner(user, yes1Vote(vote), randomRBP);
         vm.warp(block.timestamp + 1 days);
 
         (uint256 yes, uint256 yes2, uint256 no, uint256 abstain) = tracker.getVoteResultsMinerToken();
@@ -417,10 +415,10 @@ contract VoteTrackerTest is DSTestPlus {
         assertEq(abstain, 1);
     }
 
-    function testVoteYes2MinerToken() public {
+    function testVoteYes2MinerToken(uint256 vote, uint256 randomRBP) public {
         address user = users[0];
 
-        registerVotePersonalMiner(user, YES2VOTE);
+        registerVotePersonalMiner(user, yes2Vote(vote), randomRBP);
         vm.warp(block.timestamp + 1 days);
 
         (uint256 yes, uint256 yes2, uint256 no, uint256 abstain) = tracker.getVoteResultsMinerToken();
@@ -430,10 +428,10 @@ contract VoteTrackerTest is DSTestPlus {
         assertEq(abstain, 1);
     }
 
-    function testVoteNoMinerToken() public {
+    function testVoteNoMinerToken(uint256 vote, uint256 randomRBP) public {
         address user = users[0];
 
-        registerVotePersonalMiner(user, NOVOTE);
+        registerVotePersonalMiner(user, noVote(vote), randomRBP);
         vm.warp(block.timestamp + 1 days);
 
         (uint256 yes, uint256 yes2, uint256 no, uint256 abstain) = tracker.getVoteResultsMinerToken();
@@ -443,12 +441,12 @@ contract VoteTrackerTest is DSTestPlus {
         assertEq(abstain, 1);
     }
 
-    function testYesWinningVote() public {
+    function testYesWinningVote(uint256 vote, uint256 randomRBP) public {
         address user = users[0];
         address user2 = users[1];
 
-        registerVoteNormal(user, YESVOTE);
-        registerVotePersonalMiner(user2, YESVOTE);
+        registerVoteNormal(user, yes1Vote(vote));
+        registerVotePersonalMiner(user2, yes1Vote(vote), randomRBP);
         vm.warp(block.timestamp + 1 days);
 
         VoteTracker.Vote winner = tracker.winningVote();
@@ -456,12 +454,12 @@ contract VoteTrackerTest is DSTestPlus {
         assert(winner == VoteTracker.Vote.Yes);
     }
 
-    function testYes2WinningVote() public {
+    function testYes2WinningVote(uint256 vote, uint256 randomRBP) public {
         address user = users[0];
         address user2 = users[1];
 
-        registerVoteNormal(user, YES2VOTE);
-        registerVotePersonalMiner(user2, YES2VOTE);
+        registerVoteNormal(user, yes2Vote(vote));
+        registerVotePersonalMiner(user2, yes2Vote(vote), randomRBP);
         vm.warp(block.timestamp + 1 days);
 
         VoteTracker.Vote winner = tracker.winningVote();
@@ -469,12 +467,12 @@ contract VoteTrackerTest is DSTestPlus {
         assert(winner == VoteTracker.Vote.Yes2);
     }
 
-    function testNoWinningVote() public {
+    function testNoWinningVote(uint256 vote, uint256 randomRBP) public {
         address user = users[0];
         address user2 = users[1];
 
-        registerVoteNormal(user, NOVOTE);
-        registerVotePersonalMiner(user2, NOVOTE);
+        registerVoteNormal(user, noVote(vote));
+        registerVotePersonalMiner(user2, noVote(vote), randomRBP);
         vm.warp(block.timestamp + 1 days);
 
         VoteTracker.Vote winner = tracker.winningVote();
@@ -482,12 +480,12 @@ contract VoteTrackerTest is DSTestPlus {
         assert(winner == VoteTracker.Vote.No);
     }
 
-    function testAbstainWinningVote() public {
+    function testAbstainWinningVote(uint256 vote, uint256 randomRBP) public {
         address user = users[0];
         address user2 = users[1];
 
-        registerVoteNormal(user, ABSTAINVOTE);
-        registerVotePersonalMiner(user2, ABSTAINVOTE);
+        registerVoteNormal(user, abstainVote(vote));
+        registerVotePersonalMiner(user2, abstainVote(vote), randomRBP);
         vm.warp(block.timestamp + 1 days);
 
         VoteTracker.Vote winner = tracker.winningVote();
@@ -498,6 +496,61 @@ contract VoteTrackerTest is DSTestPlus {
     /****************************************************************/
     /*                           Helpers                            */
     /****************************************************************/
+
+    /************************ Vote Generators ***********************/
+
+    function yesVote(uint256 vote) internal view returns (uint256) {
+        vm.assume(vote < type(uint256).max - 3);
+        return (vote - (vote % 3));
+    }
+
+    /// @notice This should be used when 2 Yes options are available but you want to vote for the first option
+    function yes1Vote(uint256 vote) internal view returns (uint256 num1) {
+        vm.assume(vote < type(uint256).max - 3);
+        uint three = vote - (vote % 3);
+        return (three - (three % 6));
+    }
+
+    function yes2Vote(uint256 vote) internal view returns (uint256 num) {
+        vm.assume(vote < type(uint256).max - 3);
+        uint three = vote - (vote % 3);
+        num = three - (three % 6) + 3;
+    }
+
+    function noVote(uint256 vote) internal view returns (uint256 num) {
+        vm.assume(vote < type(uint256).max - 3);
+        num = vote - (vote % 3) + 1;
+    }
+
+    function abstainVote(uint256 vote) internal view returns (uint256 num) {
+        vm.assume(vote < type(uint256).max - 3);
+        num = vote - (vote % 3) + 2;
+    }
+
+    function testYesVote(uint256 vote) public {
+        uint num = yesVote(vote);
+        assert(num % 3 == 0);
+    }
+
+    function testYes1Vote(uint256 vote) public {
+        uint num = yes1Vote(vote);
+        assert(num % 3 == 0 && num % 6 == 0);
+    }
+
+    function testYes2Vote(uint256 vote) public {
+        uint num = yes2Vote(vote);
+        assert(num % 3 == 0 && num % 6 == 3);
+    }
+
+    function testNoVote(uint256 vote) public {
+        uint num = noVote(vote);
+        assert(num % 3 == 1);
+    }
+
+    function testAbstainVote(uint256 vote) public {
+        uint num = abstainVote(vote);
+        assert(num % 3 == 2);
+    }
 
     function registerVoteNormal(address user, uint256 vote) internal {
         registerNormal(user);
@@ -513,8 +566,8 @@ contract VoteTrackerTest is DSTestPlus {
         tracker.castVote(vote);
     }
 
-    function registerVotePersonalMiner(address user, uint256 vote) internal {
-        registerPersonalMiner(user);
+    function registerVotePersonalMiner(address user, uint256 vote, uint256 randomRBP) internal {
+        registerPersonalMiner(user, randomRBP);
 
         vm.prank(user);
         tracker.castVote(vote);
@@ -526,14 +579,14 @@ contract VoteTrackerTest is DSTestPlus {
     }
 
     function registerGlif(address user) internal {
-        uint64[] memory minerIds = validMinerIds();
+        uint64[] memory minerIds = glifPoolMinerIds();
         register(GLIFPOOL, minerIds, user);
     }
 
-    function registerPersonalMiner(address user) internal {
-        uint64[] memory minerIds = new uint64[](1);
-        minerIds[0] = 1889470;
-        register(address(0), minerIds, user);
+    function registerPersonalMiner(address user, uint256 randomRBP) internal {
+        vm.assume(randomRBP < type(uint256).max - 3);
+        vm.assume(randomRBP > 10000);
+        register(address(0), validMinerIds(randomRBP), user);
     }
 
     function register(address glifPool, uint64[] memory minerIds, address user) internal {
@@ -557,16 +610,14 @@ contract VoteTrackerTest is DSTestPlus {
         }
     }
 
-    function validMinerIds() internal pure returns (uint64[] memory) {
-        uint64[] memory minerIds = new uint64[](8);
-        minerIds[0] = 1847752;
-        minerIds[1] = 1858233;
-        minerIds[2] = 1872812;
-        minerIds[3] = 1882568;
-        minerIds[4] = 1889911;
-        minerIds[5] = 1909617;
-        minerIds[6] = 1917538;
-        minerIds[7] = 2251152;
+    function validMinerIds(uint256 randonRBP) internal returns (uint64[] memory) {
+        uint64[] memory minerIds = new uint64[](4);
+
+        (uint64 a, uint64 b, uint64 c, uint64 d) = split(randonRBP);
+        minerIds[0] = a;
+        minerIds[1] = b;
+        minerIds[2] = c;
+        minerIds[3] = d;
         return minerIds;
     }
 
@@ -585,19 +636,77 @@ contract VoteTrackerTest is DSTestPlus {
 
     function invalidMinerIds() internal pure returns (uint64[] memory) {
         uint64[] memory minerIds = new uint64[](8);
-        minerIds[0] = 184775100;
-        minerIds[1] = 185823500;
-        minerIds[2] = 187281100;
-        minerIds[3] = 188256900;
-        minerIds[4] = 188991000;
-        minerIds[5] = 190961600;
-        minerIds[6] = 191753900;
-        minerIds[7] = 225115100;
+        minerIds[0] = 0;
+        minerIds[1] = 0;
+        minerIds[2] = 0;
+        minerIds[3] = 0;
+        minerIds[4] = 0;
+        minerIds[5] = 0;
+        minerIds[6] = 0;
+        minerIds[7] = 0;
         return minerIds;
     }
 
     function emptyMinerIds() internal pure returns (uint64[] memory) {
         uint64[] memory minerIds = new uint64[](0);
         return minerIds;
+    }
+
+    function split(uint256 num) internal returns (uint64 a, uint64 b, uint64 c, uint64 d) {
+        bytes32 value = keccak256(abi.encodePacked(num));
+        assembly {
+            a := shr(192, value)
+            b := and(shr(128, value), 0xFFFFFFFFFFFFFFFF)
+            c := and(shr(64, value), 0xFFFFFFFFFFFFFFFF)
+            d := and(value, 0xFFFFFFFFFFFFFFFF)
+        }
+        if (a == 0) {
+            a = 1;
+        }
+        if (b == 0) {
+            b = 1;
+        }
+        if (c == 0) {
+            c = 1;
+        }
+        if (d == 0) {
+            d = 1;
+        }
+        if (a == type(uint64).max) {
+            a = type(uint64).max - 1;
+        }
+        if (b == type(uint64).max) {
+            b = type(uint64).max - 1;
+        }
+        if (c == type(uint64).max) {
+            c = type(uint64).max - 1;
+        }
+        if (d == type(uint64).max) {
+            d = type(uint64).max - 1;
+        }
+    }
+
+    function uint64ToBytes(uint64 num) internal returns (bytes memory b) {
+        b = new bytes(8);
+        assembly {
+            let mask := 0xFF
+            let bStart := add(b, 32)
+            for { let i := 0 } lt(i, 8) { i := add(i, 1) } {
+                mstore8(add(bStart, sub(7, i)), and(mask, num))
+                num := shr(8, num)
+            }
+        }
+    }
+
+    function testUint64toBytes(uint64 num) public returns (uint64) {
+        bytes memory input = uint64ToBytes(num);
+
+        uint64 value = 0;
+        for (uint i = 0; i < input.length; i++) {
+            value = value << 8 | uint64(uint8(input[i]));
+        }
+        assertEq(value, num);
+        
+        return value;
     }
 }

@@ -90,9 +90,9 @@ contract VoteTracker is Owned {
 
     enum Vote {
         Yes,
-        Yes2,
         No,
-        Abstain
+        Abstain,
+        Yes2
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -200,7 +200,7 @@ contract VoteTracker is Owned {
             abstainVotesToken += weightToken;
         }
 
-        emit VoteCast(msg.sender, weightRBP, weightToken, vote_num);
+        emit VoteCast(msg.sender, weightRBP, weightToken, vote % 6);
     }
 
     /// @notice Msg sender must be a controlling address for the miner
@@ -434,7 +434,7 @@ contract VoteTracker is Owned {
     function voterRBP(
         uint64 minerId,
         address voter
-    ) internal view returns (uint256 power) {
+    ) internal returns (uint256 power) {
         bool isminer = isMiner(minerId, voter);
         if (!isminer) return 0;
 
