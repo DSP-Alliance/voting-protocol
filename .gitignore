@@ -14,6 +14,7 @@ docs/
 # Zokrates files
 abi.json
 out
+out-fevm
 out.r1cs
 out.wtns
 proof.json
