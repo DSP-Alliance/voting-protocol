@@ -527,27 +527,27 @@ contract VoteTrackerTest is DSTestPlus {
         num = vote - (vote % 3) + 2;
     }
 
-    function testYesVote(uint256 vote) public {
+    function testYesVote(uint256 vote) public view {
         uint num = yesVote(vote);
         assert(num % 3 == 0);
     }
 
-    function testYes1Vote(uint256 vote) public {
+    function testYes1Vote(uint256 vote) public view {
         uint num = yes1Vote(vote);
         assert(num % 3 == 0 && num % 6 == 0);
     }
 
-    function testYes2Vote(uint256 vote) public {
+    function testYes2Vote(uint256 vote) public view {
         uint num = yes2Vote(vote);
         assert(num % 3 == 0 && num % 6 == 3);
     }
 
-    function testNoVote(uint256 vote) public {
+    function testNoVote(uint256 vote) public view {
         uint num = noVote(vote);
         assert(num % 3 == 1);
     }
 
-    function testAbstainVote(uint256 vote) public {
+    function testAbstainVote(uint256 vote) public view {
         uint num = abstainVote(vote);
         assert(num % 3 == 2);
     }
@@ -610,7 +610,7 @@ contract VoteTrackerTest is DSTestPlus {
         }
     }
 
-    function validMinerIds(uint256 randonRBP) internal returns (uint64[] memory) {
+    function validMinerIds(uint256 randonRBP) internal pure returns (uint64[] memory) {
         uint64[] memory minerIds = new uint64[](4);
 
         (uint64 a, uint64 b, uint64 c, uint64 d) = split(randonRBP);
@@ -652,7 +652,7 @@ contract VoteTrackerTest is DSTestPlus {
         return minerIds;
     }
 
-    function split(uint256 num) internal returns (uint64 a, uint64 b, uint64 c, uint64 d) {
+    function split(uint256 num) internal pure returns (uint64 a, uint64 b, uint64 c, uint64 d) {
         bytes32 value = keccak256(abi.encodePacked(num));
         assembly {
             a := shr(192, value)
@@ -686,7 +686,7 @@ contract VoteTrackerTest is DSTestPlus {
         }
     }
 
-    function uint64ToBytes(uint64 num) internal returns (bytes memory b) {
+    function uint64ToBytes(uint64 num) internal pure returns (bytes memory b) {
         b = new bytes(8);
         assembly {
             let mask := 0xFF

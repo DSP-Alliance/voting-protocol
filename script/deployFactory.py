@@ -1,30 +1,36 @@
 #import web3 
 from web3 import Web3
+import json
 
 rpc = "https://api.node.glif.io"
-calib = "https://api.calibration.node.glif.io/rpc/v1"
 
 w3 = Web3(Web3.HTTPProvider(rpc))
 
-myAddr = "0x3304a183aE4353CE57f062bcacc1CB2eDED5Ff2b"
-factory = "0xf109f754cdea239d2811d1f285471e0dc25d918e"
+pk = input("Enter your private key: ")
 
-bytecode = "0x3c056dbe"
-fip = "0"
-fip = hex(int(fip, 16))
-# pad to 32 bytes
-fip = fip[2:].zfill(64)
-#bytecode += fip
-print(bytecode)
+myAddr = w3.eth.account.from_key(pk).address
+
+# open the file ./out-fevm/VoteFactory.sol/VoteFactory.json
+with open("./out-fevm/VoteFactory.sol/VoteFactory.json") as f:
+    # parse the json
+    contract_json = json.load(f)
+    bytecode = contract_json["deployedBytecode"]["object"]
+
+nonce = w3.eth.get_transaction_count(myAddr)
 
 tx = {
-    "to": w3.to_checksum_address(factory),
     "data": bytecode,
+    "gas": 10000000000,
     "chainId": 314,
+    "nonce": nonce,
+    "maxFeePerGas": w3.to_wei('100', 'gwei'),
+    "maxPriorityFeePerGas": w3.to_wei('1', 'gwei'),
 }
 
-result = w3.eth.call(tx)
+signed = w3.eth.account.sign_transaction(tx, pk)
+hash = w3.eth.send_raw_transaction(signed.rawTransaction)
+print(hash.hex())
+w3.eth.wait_for_transaction_receipt(hash)
+print("confirmed")
 
 
-print(result.hex())
-# 0x453815c00000000000000000000000000000000000000000000000000000000000000012
