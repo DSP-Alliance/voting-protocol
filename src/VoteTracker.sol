@@ -84,6 +84,7 @@ contract VoteTracker is Owned {
     error AlreadyRegistered();
     error VoteNotConcluded();
     error VoteConcluded();
+    error InvalidGlifPool();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Errors                           */
@@ -224,6 +225,10 @@ contract VoteTracker is Owned {
         // Determine if glifpool is valid
         bool glif = (GlifFactory(glifFactory).isAgent(glifpool) &&
             Owned(glifpool).owner() == msg.sender);
+        
+        if (glifpool != address(0) && !glif) {
+            revert InvalidGlifPool();
+        }
 
         // Collect RBP voting weight
         uint length = minerIds.length;
