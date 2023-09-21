@@ -20,6 +20,8 @@ contract VoteTracker is Owned {
 
     uint32 public voteStart;
     uint32 public voteLength;
+    
+    address[] public lsdTokens;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      Internal Storage                      */
@@ -49,7 +51,6 @@ contract VoteTracker is Owned {
     uint256 private noVotesToken = 1;
     uint256 private abstainVotesToken = 1;
 
-    address[] internal lsdTokens;
 
     mapping(address => uint256) internal voterWeightRBP;
     mapping(address => uint256) internal voterWeightMinerToken;

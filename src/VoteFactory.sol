@@ -11,7 +11,7 @@ contract VoteFactory is Owned {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     address immutable glifFactory;
-    address[] internal starters;
+    address[] public starters;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       Public Storage                       */
