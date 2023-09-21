@@ -20,15 +20,15 @@ contract VoteTracker is Owned {
 
     uint32 public voteStart;
     uint32 public voteLength;
-    
+
     address[] public lsdTokens;
+    bool public doubleYesOption;
+    uint32 immutable public FIP;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      Internal Storage                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    bool internal doubleYesOption;
-    uint32 immutable public FIP;
     address immutable glifFactory;
 
     // Note: Tallies are initialized at 1 to save gas and keep warm storage
