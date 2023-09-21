@@ -11,6 +11,7 @@ contract VoteFactory is Owned {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     address immutable glifFactory;
+    address[] internal starters;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       Public Storage                       */
@@ -27,10 +28,31 @@ contract VoteFactory is Owned {
     event VoteStarted(address vote, uint32 fipNum, uint32 length);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          Modifers                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    modifier onlyStarter() {
+        bool isStarter = false;
+        uint length = starters.length;
+        for (uint256 i = 0; i < length; ) {
+            if (starters[i] == msg.sender) {
+                isStarter = true;
+                break;
+            }
+            unchecked {
+                ++i;
+            }
+        }
+        if (!isStarter) revert NotAStarter(msg.sender);
+        _;
+    }
+    
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Errors                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     error VoteAlreadyExists(uint32 fipNum);
+    error NotAStarter(address sender);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         Constructor                        */
@@ -39,6 +61,7 @@ contract VoteFactory is Owned {
     /// @param _glifFactory The address of the GlifFactory contract
     constructor(address _glifFactory) Owned(msg.sender) {
         glifFactory = _glifFactory;
+        starters.push(msg.sender);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -51,7 +74,7 @@ contract VoteFactory is Owned {
     /// @param doubleYesOption Whether or not to include two yes options
     /// @param lsdTokens The LSD tokens to use for the vote
     /// @return vote The address of the newly deployed VoteTracker contract
-    function startVote(uint32 length, uint32 fipNum, bool doubleYesOption, address[] memory lsdTokens) public onlyOwner returns (address vote) {
+    function startVote(uint32 length, uint32 fipNum, bool doubleYesOption, address[] memory lsdTokens) public onlyStarter returns (address vote) {
         if (FIPnumToAddress[fipNum] != address(0)) revert VoteAlreadyExists(fipNum);
 
         vote = address(new VoteTracker(length, doubleYesOption, glifFactory, lsdTokens, fipNum, owner));
@@ -59,5 +82,23 @@ contract VoteFactory is Owned {
         emit VoteStarted(vote, fipNum, length);
         FIPnumToAddress[fipNum] = vote;
         deployedVotes.push(vote);
+    }
+
+    function addStarter(address starter) public onlyOwner {
+        starters.push(starter);
+    }
+
+    function removeStarter(address starter) public onlyOwner {
+        for (uint256 i = 0; i < starters.length; i++) {
+            if (starters[i] == starter) {
+                _removeStarterIndex(i);
+                return;
+            }
+        }
+    }
+
+    function _removeStarterIndex(uint256 index) public onlyOwner {
+        starters[index] = starters[starters.length - 1];
+        starters.pop();
     }
 }
