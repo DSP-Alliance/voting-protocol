@@ -5,18 +5,20 @@
 To be able to cast votes a user must first register with the registration function.
 
 ```C
-function registerVoter(CommonTypes.FilActorId miner) public returns (uint256 power)
+function registerVoter(address glifpool, uint64[] calldata minerIds) public returns (uint256 powerRBP, uint256 powerToken)
 ```
 
-If you are not a miner then you should pass a zero as the actor Id. If you are a miner then pass your miner Id from a controlling address (owner, worker). The contract will verify that you indeed control that miner.
+To register with a glif pool, supply your glif pool agent address and the minerIds that the glifpool owns. To register your glif pool you must be the owner() of the glif pool and the glif pool address must be an agent registered from the glif pool agent factory. If you are not the owner or it is not from the factory and the glifpool address is not the zero address then this function will revert.
+
+To register a personal miner, register from a controlling address of your miners. Supply every minerId. Your address that you register from must be a controlling address for every miner, or it will not register the raw byte power (RBP) for that miner.
+
+Vote weights are set after registering and to prevent misconduct re-registering is prevented.
 
 ## Weights
 
-Each voter is assigned a weight to their votes to ensure people with more stake in the protocol get an appropriate amount of power.
+There are three different weight categories. Raw byte power, miner's tokens, normal user's tokens. RBP is weighed against RBP and tokens are weighed against tokens. 
 
-1. Miners - Weight proportional to the amount of raw byte power supplied to the network
-
-2. Non-miners - A weight of 10 (subject to change) or the equivalent of 10 bytes of raw byte power
+There is seperation between miner tokens and normal user tokens, however this is just to differentiate between opinions of miners and all else.
 
 ## Vote casting
 
@@ -25,45 +27,43 @@ After a user has registered then they can cast a vote. There are three voting ch
 1. Yes
 2. No
 3. Abstain
+4. Yes Option 2 (Optional)
 
-To encode your vote you can submit any 256 bit unsigned integer. To determine the vote modulo 3 is taken of the number. So yes would be 0, no would be 1, abstain would be 2, yes would be 3, and so on.
+By default there are three different voting choices. If the variable `doubleYesVote` is set in the vote tracker then there is a fourth voting option represented as two different types of yes options.
 
 Users cannot vote twice.
 
 ## Results
 
-After the voting period is over, no more votes can be cast and a new function is exposed to retrieve the votes.
+After the voting period is over, no more votes can be cast and 4 new functions are exposed to retrieve the votes.
 
 ```C
-function getVoteResults() public view returns (uint256, uint256, uint256)
+function getVoteResultsRBP() public view returns (uint256, uint256, uint256, uint256)
 ```
 
-The numbers returned are the weighted amounts of yes, no, and abstain respectively.
-
-## Demo
-
-![Demo Video](./assets/demo.gif)
-
-## Not Working
-
-Currently the testing for the tracker fails in some aspects that involves Filecoin's address look up precompiles, the Miner API, and Power API from [filecoin solidity](https://github.com/filecoin-project/filecoin-solidity).
-
-This is used to verify that a supplied miner Id is controlled by the vote registration transaction sender.
-
-The API modules are also currently not working, which is used for looking up a miner's raw byte power supplied to the network.
+This function returns the weights voted by raw byte power as yes, yes option 2, no, and abstain votes respectively
 
 ```C
-function isMiner(uint64 minerId, address sender) internal view returns (bool)
+function getVoteResultsMinerToken() public view returns (uint256, uint256, uint256, uint256)
 ```
 
-This should return a proper true/false when determining if ``sender`` is a controlling address for ``minerId``
-
-Embedded in this function is some calls to precompiles for address lookups which are returning null bytes, even on valid Id's.
+This function returns the weights voted by miner tokens as yes, yes option 2, no, and abstain votes respectively
 
 ```C
-function voterPower(uint64 minerId, address voter) internal view returns (uint256 power)
+function getVoteResultsToken() public view returns (uint256, uint256, uint256, uint256)
 ```
 
-This function should return the miner's raw byte power or 10 if the minerId is 0.
+This function returns the weights voted by normal user tokens as yes, yes option 2, no, and abstain votes respectively
 
-Instead of proper byte power being returned the values returned are zero even for minerId's which have storage allocated to the network.
+```C
+function winningVote() public view returns (Vote)
+```
+
+This function is what determines what was the winning vote. `Vote` is an enum where when converting from an integer, 0 is Yes, 1 is No, 2 is abstain, and 3 is Yes option 2
+
+Miner tokens and normal user token voting weights are added together then compared against the RBP consensus. So we have two categories of voting to decide with, RBP and tokens.
+
+If RBP and tokens vote yes, pass
+If RBP is yes, and tokens is no, don't pass
+If RBP is no, and tokens is yes, don't pass
+If RBP is no, and tokens is no, don't pass
