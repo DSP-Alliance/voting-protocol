@@ -1,12 +1,18 @@
 #import web3 
 from web3 import Web3
 import json
+import os
+from os.path import join, dirname
+from dotenv import load_dotenv
+
+dotenv_path = ".env"
+load_dotenv(dotenv_path)
 
 rpc = "https://api.node.glif.io"
 
 w3 = Web3(Web3.HTTPProvider(rpc))
 
-pk = input("Enter your private key: ")
+pk = os.environ.get("PRIVATE_KEY")
 
 myAddr = w3.eth.account.from_key(pk).address
 
@@ -20,12 +26,17 @@ nonce = w3.eth.get_transaction_count(myAddr)
 
 tx = {
     "data": bytecode,
-    "gas": 10000000000,
+    "gas": 100000000,
     "chainId": 314,
     "nonce": nonce,
     "maxFeePerGas": w3.to_wei('100', 'gwei'),
     "maxPriorityFeePerGas": w3.to_wei('1', 'gwei'),
 }
+
+print(tx)
+print()
+
+input("Confirm?")
 
 signed = w3.eth.account.sign_transaction(tx, pk)
 hash = w3.eth.send_raw_transaction(signed.rawTransaction)
