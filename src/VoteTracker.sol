@@ -25,11 +25,16 @@ contract VoteTracker is Owned {
     bool public doubleYesOption;
     uint32 immutable public FIP;
 
+    mapping(address => uint256) public voterWeightRBP;
+    mapping(address => uint256) public voterWeightMinerToken;
+    mapping(address => uint256) public voterWeightToken;
+    mapping(address => bool) public hasVoted;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      Internal Storage                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    address immutable glifFactory;
+    address constant glifFactory = address(0x526Ab27Af261d28c2aC1fD24f63CcB3bd44D50e0);
 
     // Note: Tallies are initialized at 1 to save gas and keep warm storage
 
@@ -52,10 +57,6 @@ contract VoteTracker is Owned {
     uint256 private abstainVotesToken = 1;
 
 
-    mapping(address => uint256) internal voterWeightRBP;
-    mapping(address => uint256) internal voterWeightMinerToken;
-    mapping(address => uint256) internal voterWeightToken;
-    mapping(address => bool) internal hasVoted;
     mapping(uint64 => bool) internal registeredMiner;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -129,19 +130,16 @@ contract VoteTracker is Owned {
 
     /// @param length The length of the vote in seconds
     /// @param _doubleYesOption If true, the vote will have two yes options
-    /// @param _glifFactory The address of the glif factory
     /// @param _lsdTokens The addresses of the LSD tokens to count as voting power
     /// @param owner The owner of the vote
     constructor(
         uint32 length,
         bool _doubleYesOption,
-        address _glifFactory,
         address[] memory _lsdTokens,
         uint32 _FIP,
         address owner
     ) Owned(owner) {
         doubleYesOption = _doubleYesOption;
-        glifFactory = _glifFactory;
         FIP = _FIP;
         voteLength = length;
         voteStart = uint32(block.timestamp);

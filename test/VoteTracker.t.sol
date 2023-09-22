@@ -40,7 +40,7 @@ contract VoteTrackerTest is DSTestPlus {
 
         lsdTokens = new address[](1);
         lsdTokens[0] = STFIL;
-        tracker = new VoteTracker(1 days, true, GLIFFACTORY, lsdTokens, 0, users[0]);
+        tracker = new VoteTracker(1 days, true, lsdTokens, 0, users[0]);
     }
 
     function testSetUp() public view {
@@ -82,9 +82,8 @@ contract VoteTrackerTest is DSTestPlus {
         assert(user != Owned(GLIFPOOL).owner());
 
         vm.prank(user);
+        vm.expectRevert(VoteTracker.InvalidGlifPool.selector);
         (uint powerRBP, uint powerToken) = tracker.registerVoter(GLIFPOOL, minerIds);
-        assertEq(powerRBP, 0);
-        assertEq(powerToken, user.balance);
     }
 
     function testRegisterTwiceNotMiner() public {
