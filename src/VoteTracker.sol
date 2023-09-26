@@ -24,6 +24,7 @@ contract VoteTracker is Owned {
     address[] public lsdTokens;
     bool public doubleYesOption;
     uint32 immutable public FIP;
+    string public question;
 
     mapping(address => uint256) public voterWeightRBP;
     mapping(address => uint256) public voterWeightMinerToken;
@@ -139,13 +140,15 @@ contract VoteTracker is Owned {
         bool _doubleYesOption,
         address[] memory _lsdTokens,
         uint32 _FIP,
-        address owner
+        address owner,
+        string memory _question
     ) Owned(owner) {
         doubleYesOption = _doubleYesOption;
         FIP = _FIP;
         voteLength = length;
         voteStart = uint32(block.timestamp);
         lsdTokens = _lsdTokens;
+        question = _question;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

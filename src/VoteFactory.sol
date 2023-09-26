@@ -71,10 +71,10 @@ contract VoteFactory is Owned {
     /// @param doubleYesOption Whether or not to include two yes options
     /// @param lsdTokens The LSD tokens to use for the vote
     /// @return vote The address of the newly deployed VoteTracker contract
-    function startVote(uint32 length, uint32 fipNum, bool doubleYesOption, address[] memory lsdTokens) public onlyStarter returns (address vote) {
+    function startVote(uint32 length, uint32 fipNum, bool doubleYesOption, address[] memory lsdTokens, string memory question) public onlyStarter returns (address vote) {
         if (FIPnumToAddress[fipNum] != address(0)) revert VoteAlreadyExists(fipNum);
 
-        vote = address(new VoteTracker(length, doubleYesOption, lsdTokens, fipNum, owner));
+        vote = address(new VoteTracker(length, doubleYesOption, lsdTokens, fipNum, owner, question));
 
         FIPnumToAddress[fipNum] = vote;
         deployedVotes.push(vote);

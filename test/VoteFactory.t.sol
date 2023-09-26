@@ -31,9 +31,19 @@ contract VoteFactoryTest is DSTestPlus {
     }
 
     function testStartVote() public {
-        address user = users[0];
+        address vote = factory.startVote(1 days, 0, false, lsdTokens, "What sandwich should i eat? AHHHHHHHHAHAHAHAHAHAHAHAHAHHAHAHAHAHAHAHAHAHAHAHAHAHAHAHHHHHHHHHHHHAHAHAHAHAHAHAHAHAHHAHAHAHHAHAHA");
+        assertEq(vote, factory.deployedVotes(0));
+        assertEq(factory.FIPnumToAddress(0), vote);
+    }
 
-        address vote = factory.startVote(1 days, 0, false, lsdTokens);
+    function testStartVoteShortQ() public {
+        address vote = factory.startVote(1 days, 0, false, lsdTokens, "What sandwich should i eat?");
+        assertEq(vote, factory.deployedVotes(0));
+        assertEq(factory.FIPnumToAddress(0), vote);
+    }
+
+    function testStartVoteShortQ1() public {
+        address vote = factory.startVote(1 days, 0, false, lsdTokens, "What sandwich should i eat? ");
         assertEq(vote, factory.deployedVotes(0));
         assertEq(factory.FIPnumToAddress(0), vote);
     }
