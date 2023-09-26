@@ -86,6 +86,8 @@ contract VoteTracker is Owned {
     error VoteNotConcluded();
     error VoteConcluded();
     error InvalidGlifPool();
+    error MinerAlreadyRegistered();
+    error InvalidMiner();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Errors                           */
@@ -233,15 +235,16 @@ contract VoteTracker is Owned {
         for (uint i = 0; i < minerIds.length; ++i) {
             uint64 minerId = minerIds[i];
 
-            if (registeredMiner[minerId]) {
-                continue;
-            }
+            if (registeredMiner[minerId]) revert MinerAlreadyRegistered();
 
             // Add their RBP voting weight
             address minerOwner = glif ? glifpool : msg.sender;
 
             // Set the RBP voting weight
-            powerRBP += voterRBP(minerId, minerOwner);
+            uint rbp = voterRBP(minerId, minerOwner);
+            if (rbp == 0) revert InvalidMiner();
+
+            powerRBP += rbp;
 
             registeredMiner[minerId] = true;
         }

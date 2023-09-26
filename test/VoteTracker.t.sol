@@ -69,9 +69,8 @@ contract VoteTrackerTest is DSTestPlus {
         uint64[] memory minerIds = invalidMinerIds();
 
         vm.prank(user);
-        (uint powerRBP, uint powerToken) = tracker.registerVoter(address(0), minerIds);
-        assertEq(powerRBP, 0);
-        assertEq(powerToken, user.balance);
+        vm.expectRevert(VoteTracker.InvalidMiner.selector);
+        tracker.registerVoter(address(0), minerIds);
     }
 
     function testRegisterNotYourGlifPool() public {
