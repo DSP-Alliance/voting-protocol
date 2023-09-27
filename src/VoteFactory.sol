@@ -10,7 +10,7 @@ contract VoteFactory is Owned {
     /*                      Internal Storage                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    address[] public starters;
+    mapping(address => bool) public starters;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       Public Storage                       */
@@ -31,18 +31,7 @@ contract VoteFactory is Owned {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     modifier onlyStarter() {
-        bool isStarter = false;
-        uint length = starters.length;
-        for (uint256 i = 0; i < length; ) {
-            if (starters[i] == msg.sender) {
-                isStarter = true;
-                break;
-            }
-            unchecked {
-                ++i;
-            }
-        }
-        if (!isStarter) revert NotAStarter(msg.sender);
+        if (!starters[msg.sender]) revert NotAStarter(msg.sender);
         _;
     }
     
@@ -58,7 +47,7 @@ contract VoteFactory is Owned {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     constructor() Owned(msg.sender) {
-        starters.push(msg.sender);
+        starters[msg.sender] = true;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -87,16 +76,6 @@ contract VoteFactory is Owned {
     }
 
     function removeStarter(address starter) public onlyOwner {
-        for (uint256 i = 0; i < starters.length; i++) {
-            if (starters[i] == starter) {
-                _removeStarterIndex(i);
-                return;
-            }
-        }
-    }
-
-    function _removeStarterIndex(uint256 index) public onlyOwner {
-        starters[index] = starters[starters.length - 1];
-        starters.pop();
+        starters[msg.sender] = false;
     }
 }
