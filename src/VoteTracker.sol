@@ -12,7 +12,6 @@ import "filecoin-solidity/types/PowerTypes.sol";
 import "solmate/auth/Owned.sol";
 
 contract VoteTracker is Owned {
-    using CommonTypes for uint64;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       Public Storage                       */
@@ -20,16 +19,17 @@ contract VoteTracker is Owned {
 
     uint32 public voteStart;
     uint32 public voteLength;
-
-    address[] public lsdTokens;
     bool public doubleYesOption;
     uint32 immutable public FIP;
+
+    address[] public lsdTokens;
     string public question;
 
     mapping(address => uint256) public voterWeightRBP;
     mapping(address => uint256) public voterWeightMinerToken;
     mapping(address => uint256) public voterWeightToken;
     mapping(address => bool) public hasVoted;
+    mapping(uint64 => bool) public registeredMiner;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      Internal Storage                      */
@@ -56,9 +56,6 @@ contract VoteTracker is Owned {
     uint256 private yesVoteOption2Token = 1;
     uint256 private noVotesToken = 1;
     uint256 private abstainVotesToken = 1;
-
-
-    mapping(uint64 => bool) internal registeredMiner;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Events                           */
@@ -91,7 +88,7 @@ contract VoteTracker is Owned {
     error InvalidMiner();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Errors                           */
+    /*                           Enums                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     enum Vote {
@@ -444,7 +441,7 @@ contract VoteTracker is Owned {
     function voterRBP(
         uint64 minerId,
         address voter
-    ) internal returns (uint256 power) {
+    ) internal view returns (uint256 power) {
         bool isminer = isMiner(minerId, voter);
         if (!isminer) return 0;
 

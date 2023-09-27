@@ -82,7 +82,7 @@ contract VoteTrackerTest is DSTestPlus {
 
         vm.prank(user);
         vm.expectRevert(VoteTracker.InvalidGlifPool.selector);
-        (uint powerRBP, uint powerToken) = tracker.registerVoter(GLIFPOOL, minerIds);
+        tracker.registerVoter(GLIFPOOL, minerIds);
     }
 
     function testRegisterTwiceNotMiner() public {
