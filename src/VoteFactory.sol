@@ -30,12 +30,14 @@ ____    ____  ______   .___________. __  .__   __.   _______
 
 contract VoteFactory is Owned {
 
+
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       Public Storage                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     address[] public deployedVotes;
-    address[] public starters;
+    mapping(address => bool) public starters;
 
     mapping (uint32 => address) public FIPnumToAddress;
 
@@ -50,18 +52,7 @@ contract VoteFactory is Owned {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     modifier onlyStarter() {
-        bool isStarter = false;
-        uint length = starters.length;
-        for (uint256 i = 0; i < length; ) {
-            if (starters[i] == msg.sender) {
-                isStarter = true;
-                break;
-            }
-            unchecked {
-                ++i;
-            }
-        }
-        if (!isStarter) revert NotAStarter(msg.sender);
+        if (!starters[msg.sender]) revert NotAStarter(msg.sender);
         _;
     }
     
@@ -77,7 +68,7 @@ contract VoteFactory is Owned {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     constructor() Owned(msg.sender) {
-        starters.push(msg.sender);
+        starters[msg.sender] = true;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -102,20 +93,10 @@ contract VoteFactory is Owned {
     }
 
     function addStarter(address starter) public onlyOwner {
-        starters.push(starter);
+        starters[starter] = true;
     }
 
     function removeStarter(address starter) public onlyOwner {
-        for (uint256 i = 0; i < starters.length; i++) {
-            if (starters[i] == starter) {
-                _removeStarterIndex(i);
-                return;
-            }
-        }
-    }
-
-    function _removeStarterIndex(uint256 index) public onlyOwner {
-        starters[index] = starters[starters.length - 1];
-        starters.pop();
+        starters[starter] = false;
     }
 }
