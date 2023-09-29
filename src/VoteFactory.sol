@@ -99,4 +99,8 @@ contract VoteFactory is Owned {
     function removeStarter(address starter) public onlyOwner {
         starters[starter] = false;
     }
+
+    function deployedVotesLength() public view {
+        return deployedVotes.length;
+    }
 }
