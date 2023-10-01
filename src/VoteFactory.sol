@@ -78,13 +78,13 @@ contract VoteFactory is Owned {
     /// @notice Deploys a new VoteTracker contract
     /// @param length The length of the vote in seconds
     /// @param fipNum The FIP number that this vote is for
-    /// @param doubleYesOption Whether or not to include two yes options
+    /// @param yesOptions The two options after voting yes to present, if length > 0
     /// @param lsdTokens The LSD tokens to use for the vote
     /// @return vote The address of the newly deployed VoteTracker contract
-    function startVote(uint32 length, uint32 fipNum, bool doubleYesOption, address[] memory lsdTokens, string memory question) public onlyStarter returns (address vote) {
+    function startVote(uint32 length, uint32 fipNum, string[] memory yesOptions, address[] memory lsdTokens, string memory question) public onlyStarter returns (address vote) {
         if (FIPnumToAddress[fipNum] != address(0)) revert VoteAlreadyExists(fipNum);
 
-        vote = address(new VoteTracker(length, doubleYesOption, lsdTokens, fipNum, owner, question));
+        vote = address(new VoteTracker(length, yesOptions, lsdTokens, fipNum, owner, question));
 
         FIPnumToAddress[fipNum] = vote;
         deployedVotes.push(vote);
@@ -100,7 +100,7 @@ contract VoteFactory is Owned {
         starters[starter] = false;
     }
 
-    function deployedVotesLength() public view {
+    function deployedVotesLength() public view returns (uint256 len) {
         return deployedVotes.length;
     }
 }

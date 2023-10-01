@@ -19,7 +19,7 @@ contract VoteTracker is Owned {
 
     uint32 public voteStart;
     uint32 public voteLength;
-    bool public doubleYesOption;
+    string[] public yesOptions;
     uint32 immutable public FIP;
 
     address[] public lsdTokens;
@@ -129,18 +129,18 @@ contract VoteTracker is Owned {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @param length The length of the vote in seconds
-    /// @param _doubleYesOption If true, the vote will have two yes options
+    /// @param _yesOptions If length > 0, vote will present these options if voting yes
     /// @param _lsdTokens The addresses of the LSD tokens to count as voting power
     /// @param owner The owner of the vote
     constructor(
         uint32 length,
-        bool _doubleYesOption,
+        string[] memory _yesOptions,
         address[] memory _lsdTokens,
         uint32 _FIP,
         address owner,
         string memory _question
     ) Owned(owner) {
-        doubleYesOption = _doubleYesOption;
+        yesOptions = _yesOptions;
         FIP = _FIP;
         voteLength = length;
         voteStart = uint32(block.timestamp);
@@ -181,7 +181,7 @@ contract VoteTracker is Owned {
 
         // YES VOTE
         if (vote_num == 0) {
-            if (doubleYesOption) {
+            if (yesOptions.length > 0) {
                 yesChoice(vote, weightRBP, weightMinerToken, weightToken);
             } else {
                 yesVotesRBP += weightRBP;

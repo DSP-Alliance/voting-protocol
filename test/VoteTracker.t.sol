@@ -38,9 +38,10 @@ contract VoteTrackerTest is DSTestPlus {
         utils = new Utilities();
         users = utils.createUsers(5);
 
+        string[] memory yesOptions;
         lsdTokens = new address[](1);
         lsdTokens[0] = STFIL;
-        tracker = new VoteTracker(1 days, true, lsdTokens, 0, users[0], "What sandwich should i eat");
+        tracker = new VoteTracker(1 days, yesOptions, lsdTokens, 0, users[0], "What sandwich should i eat");
     }
 
     function testSetUp() public view {
