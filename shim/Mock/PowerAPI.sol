@@ -7,7 +7,7 @@ import "filecoin-solidity/types/CommonTypes.sol";
 library PowerAPI {
     bytes32 constant RANDOMNESS_SEED = keccak256("Voting Tool Randomness Seed");
 
-    function minerRawPower(uint64 minerId) public returns (PowerTypes.MinerRawPowerReturn memory power) {
+    function minerRawPower(uint64 minerId) public pure returns (PowerTypes.MinerRawPowerReturn memory power) {
         bytes memory val = uint64ToBytes(minerId);
         if (minerId == 0 || minerId == type(uint64).max) {
             val = hex"00";
