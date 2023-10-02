@@ -493,6 +493,10 @@ contract VoteTracker is Owned {
         }
     }
 
+    function hasRegistered(address voter) public view returns (bool) {
+        return voterWeightRBP[voter] != 0 || voterWeightToken[voter] != 0 || voterWeightMinerToken[voter] != 0;
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       Admin Functions                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
