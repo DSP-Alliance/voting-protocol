@@ -19,7 +19,7 @@ contract VoteTracker is Owned {
 
     uint32 public voteStart;
     uint32 public voteLength;
-    string[] public yesOptions;
+    string[2] public yesOptions;
     uint32 immutable public FIP;
 
     address[] public lsdTokens;
@@ -134,7 +134,7 @@ contract VoteTracker is Owned {
     /// @param owner The owner of the vote
     constructor(
         uint32 length,
-        string[] memory _yesOptions,
+        string[2] memory _yesOptions,
         address[] memory _lsdTokens,
         uint32 _FIP,
         address owner,
@@ -361,9 +361,6 @@ contract VoteTracker is Owned {
         view
         returns (uint256, uint256, uint256, uint256)
     {
-        if (uint32(block.timestamp) < voteStart + voteLength) {
-            revert VoteNotConcluded();
-        }
         return (yesVotesRBP, yesVoteOption2RBP, noVotesRBP, abstainVotesRBP);
     }
 
@@ -378,9 +375,6 @@ contract VoteTracker is Owned {
         view
         returns (uint256, uint256, uint256, uint256)
     {
-        if (uint32(block.timestamp) < voteStart + voteLength) {
-            revert VoteNotConcluded();
-        }
         return (
             yesVotesMinerToken,
             yesVoteOption2MinerToken,
@@ -400,9 +394,6 @@ contract VoteTracker is Owned {
         view
         returns (uint256, uint256, uint256, uint256)
     {
-        if (uint32(block.timestamp) < voteStart + voteLength) {
-            revert VoteNotConcluded();
-        }
         return (
             yesVotesToken,
             yesVoteOption2Token,

@@ -31,7 +31,7 @@ contract VoteFactoryTest is DSTestPlus {
     }
 
     function testStartVote() public {
-        string[] memory yesOptions;
+        string[2] memory yesOptions;
 
         address vote = factory.startVote(1 days, 0, yesOptions, lsdTokens, "What sandwich should i eat? AHHHHHHHHAHAHAHAHAHAHAHAHAHHAHAHAHAHAHAHAHAHAHAHAHAHAHAHHHHHHHHHHHHAHAHAHAHAHAHAHAHAHHAHAHAHHAHAHA");
         assertEq(vote, factory.deployedVotes(0));
@@ -39,7 +39,7 @@ contract VoteFactoryTest is DSTestPlus {
     }
 
     function testStartVoteShortQ() public {
-        string[] memory yesOptions;
+        string[2] memory yesOptions;
 
         address vote = factory.startVote(1 days, 0, yesOptions, lsdTokens, "What sandwich should i eat?");
         assertEq(vote, factory.deployedVotes(0));
@@ -47,7 +47,7 @@ contract VoteFactoryTest is DSTestPlus {
     }
 
     function testStartVoteShortQ1() public {
-        string[] memory yesOptions;
+        string[2] memory yesOptions;
 
         address vote = factory.startVote(1 days, 0, yesOptions, lsdTokens, "What sandwich should i eat? ");
         assertEq(vote, factory.deployedVotes(0));

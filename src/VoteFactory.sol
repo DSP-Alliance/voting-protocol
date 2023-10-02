@@ -81,7 +81,7 @@ contract VoteFactory is Owned {
     /// @param yesOptions The two options after voting yes to present, if length > 0
     /// @param lsdTokens The LSD tokens to use for the vote
     /// @return vote The address of the newly deployed VoteTracker contract
-    function startVote(uint32 length, uint32 fipNum, string[] memory yesOptions, address[] memory lsdTokens, string memory question) public onlyStarter returns (address vote) {
+    function startVote(uint32 length, uint32 fipNum, string[2] memory yesOptions, address[] memory lsdTokens, string memory question) public onlyStarter returns (address vote) {
         if (FIPnumToAddress[fipNum] != address(0)) revert VoteAlreadyExists(fipNum);
 
         vote = address(new VoteTracker(length, yesOptions, lsdTokens, fipNum, owner, question));

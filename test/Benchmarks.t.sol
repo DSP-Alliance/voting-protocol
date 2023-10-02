@@ -28,7 +28,7 @@ contract VoteTrackerTest is DSTestPlus {
         utils = new Utilities();
         users = utils.createUsers(5);
 
-        string[] memory yesOptions;
+        string[2] memory yesOptions;
 
         lsdTokens = new address[](1);
         lsdTokens[0] = address(0x3C3501E6c353DbaEDDFA90376975Ce7aCe4Ac7a8);
