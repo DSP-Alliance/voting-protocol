@@ -222,6 +222,10 @@ contract VoteTracker is Owned {
             revert AlreadyRegistered();
         }
 
+        if (uint32(block.timestamp) > voteStart + voteLength) {
+            revert VoteConcluded();
+        }
+
         // Determine if glifpool is valid
         bool glif = (GlifFactory(glifFactory).isAgent(glifpool) &&
             Owned(glifpool).owner() == msg.sender);
