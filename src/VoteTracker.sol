@@ -501,6 +501,46 @@ contract VoteTracker is Owned {
         return voterWeightRBP[voter] != 0 || voterWeightToken[voter] != 0 || voterWeightMinerToken[voter] != 0;
     }
 
+    function getVotingPower(address voter, address glifpool, uint64[] calldata minerIds) public view returns (uint256 tokenPower, uint256 bytePower) {
+        // Determine if glifpool is valid
+        bool glif = (GlifFactory(glifFactory).isAgent(glifpool) &&
+            Owned(glifpool).owner() == voter);
+        
+        if (glifpool != address(0) && !glif) {
+            revert InvalidGlifPool();
+        }
+        
+        // Collect RBP voting weight
+        uint length = minerIds.length;
+        for (uint i = 0; i < minerIds.length; ++i) {
+            uint64 minerId = minerIds[i];
+
+            // Add their RBP voting weight
+            address minerOwner = glif ? glifpool : voter;
+
+            // Set the RBP voting weight
+            uint rbp = voterRBP(minerId, minerOwner);
+            if (rbp == 0) revert InvalidMiner();
+
+            bytePower += rbp;
+        }
+
+        // Collect FIL voting weight
+        tokenPower += voter.balance;
+
+        // Collect LSD voting weight
+        length = lsdTokens.length;
+        for (uint i = 0; i < length; ++i) {
+            ERC20 token = ERC20(lsdTokens[i]);
+
+            uint balance = token.balanceOf(voter);
+
+            tokenPower += balance;
+        }
+
+        return (tokenPower, bytePower);
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       Admin Functions                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
