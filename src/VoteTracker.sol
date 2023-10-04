@@ -436,7 +436,7 @@ contract VoteTracker is Owned {
     function voterRBP(
         uint64 minerId,
         address voter
-    ) internal view returns (uint256 power) {
+    ) public view returns (uint256 power) {
         bool isminer = isMiner(minerId, voter);
         if (!isminer) return 0;
 
