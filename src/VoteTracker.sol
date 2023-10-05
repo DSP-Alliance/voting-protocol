@@ -246,7 +246,7 @@ contract VoteTracker is Owned {
 
             // Set the RBP voting weight
             uint rbp = voterRBP(minerId, minerOwner);
-            if (rbp == 0) revert InvalidMiner();
+            if (rbp == 0) continue;
 
             powerRBP += rbp;
 
@@ -520,7 +520,7 @@ contract VoteTracker is Owned {
 
             // Set the RBP voting weight
             uint rbp = voterRBP(minerId, minerOwner);
-            if (rbp == 0) revert InvalidMiner();
+            if (rbp == 0) continue;
 
             bytePower += rbp;
         }
