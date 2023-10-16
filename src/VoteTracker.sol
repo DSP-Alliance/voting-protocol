@@ -36,25 +36,23 @@ contract VoteTracker is Owned {
     address constant glifFactory = address(0x526Ab27Af261d28c2aC1fD24f63CcB3bd44D50e0);
     IVoteFactory immutable factory;
 
-    // Note: Tallies are initialized at 1 to save gas and keep warm storage
-
     // Raw Byte Power Tallies
-    uint256 private yesVotesRBP = 1;
-    uint256 private yesVoteOption2RBP = 1;
-    uint256 private noVotesRBP = 1;
-    uint256 private abstainVotesRBP = 1;
+    uint256 private yesVotesRBP = 0;
+    uint256 private yesVoteOption2RBP = 0;
+    uint256 private noVotesRBP = 0;
+    uint256 private abstainVotesRBP = 0;
 
     // Miner Token Tally
-    uint256 private yesVotesMinerToken = 1;
-    uint256 private yesVoteOption2MinerToken = 1;
-    uint256 private noVotesMinerToken = 1;
-    uint256 private abstainVotesMinerToken = 1;
+    uint256 private yesVotesMinerToken = 0;
+    uint256 private yesVoteOption2MinerToken = 0;
+    uint256 private noVotesMinerToken = 0;
+    uint256 private abstainVotesMinerToken = 0;
 
     // Token Tallies
-    uint256 private yesVotesToken = 1;
-    uint256 private yesVoteOption2Token = 1;
-    uint256 private noVotesToken = 1;
-    uint256 private abstainVotesToken = 1;
+    uint256 private yesVotesToken = 0;
+    uint256 private yesVoteOption2Token = 0;
+    uint256 private noVotesToken = 0;
+    uint256 private abstainVotesToken = 0;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Events                           */
