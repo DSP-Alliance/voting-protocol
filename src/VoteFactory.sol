@@ -147,6 +147,8 @@ contract VoteFactory is Owned {
             revert NotRegistered();
         }
 
+        if (registeredMiner[minerId]) revert MinerAlreadyRegistered();
+
         registeredMiner[minerId] = voter;
         ownedMiners[voter] = ownedMiners[voter].push(minerId);
     }
