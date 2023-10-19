@@ -333,19 +333,17 @@ contract VoteTracker is Owned {
 
     function getVotingPower(address voter) public view returns (uint256 tokenPower, uint256 bytePower, uint256 minerTokenPower) {
         address glifpool = factory.ownedGlifPool(voter);
-        // Determine if glifpool is valid
-        bool glif = (GlifFactory(glifFactory).isAgent(glifpool) &&
-            Owned(glifpool).owner() == voter);
-        
-        if (glifpool != address(0) && !glif) {
-            revert InvalidGlifPool();
+
+        bool glif = false;
+        if (glifpool != address(0)) {
+            glif = (GlifFactory(glifFactory).isAgent(glifpool) &&
+                Owned(glifpool).owner() == msg.sender);
         }
-        
+
         // Collect RBP voting weight
-        uint64[] storage minerIds = factory.ownedMiners(voter);
-        uint length = minerIds.length;
+        uint length = factory.getOwnedMinerLength(voter);
         for (uint i = 0; i < length; ++i) {
-            uint64 minerId = minerIds[i];
+            uint64 minerId = factory.ownedMiners(voter, i);
 
             // Add their RBP voting weight
             address minerOwner = glif ? glifpool : voter;

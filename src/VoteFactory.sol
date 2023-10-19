@@ -28,12 +28,11 @@ ____    ____  ______   .___________. __  .__   __.   _______
 
 */
 
-error AlreadyRegistered();
-error NotOwner();
-error MinerAlreadyRegistered();
-
 contract VoteFactory is Owned {
-
+    error AlreadyRegistered();
+    error NotOwner();
+    error MinerAlreadyRegistered();
+    error InvalidGlifPool();
 
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -95,7 +94,7 @@ contract VoteFactory is Owned {
     function startVote(uint32 length, uint32 fipNum, string[2] memory yesOptions, address[] memory lsdTokens, string memory question) public onlyStarter returns (address vote) {
         if (FIPnumToAddress[fipNum] != address(0)) revert VoteAlreadyExists(fipNum);
 
-        vote = address(new VoteTracker(length, yesOptions, lsdTokens, fipNum, owner, question));
+        vote = address(new VoteTracker(address(this), length, yesOptions, lsdTokens, fipNum, owner, question));
 
         FIPnumToAddress[fipNum] = vote;
         deployedVotes.push(vote);
@@ -111,19 +110,27 @@ contract VoteFactory is Owned {
             revert AlreadyRegistered();
         }
 
-        // Determine if glifpool is valid
-        bool glif = (GlifFactory(glifFactory).isAgent(glifpool) &&
-            Owned(glifpool).owner() == msg.sender);
+        bool glif = false;
+        if (glifpool != address(0)) {
+            glif = (GlifFactory(glifFactory).isAgent(glifpool) &&
+                Owned(glifpool).owner() == msg.sender);
+
+            if (!glif) {
+                revert InvalidGlifPool();
+            }
+        }
 
         // Collect RBP voting weight
         uint length = minerIds.length;
         for (uint i = 0; i < length; ++i) {
             uint64 minerId = minerIds[i];
 
-            if (registeredMiner[minerId]) revert MinerAlreadyRegistered();
+            if (registeredMiner[minerId] != address(0)) revert MinerAlreadyRegistered();
 
             // Add their RBP voting weight
             address minerOwner = glif ? glifpool : msg.sender;
+            uint rbp = voterRBP(minerId, minerOwner);
+            if (rbp == 0) continue;
 
             registeredMiner[minerId] = msg.sender;
         }
@@ -147,10 +154,10 @@ contract VoteFactory is Owned {
             revert NotRegistered();
         }
 
-        if (registeredMiner[minerId]) revert MinerAlreadyRegistered();
+        if (registeredMiner[minerId] != address(0)) revert MinerAlreadyRegistered();
 
         registeredMiner[minerId] = voter;
-        ownedMiners[voter] = ownedMiners[voter].push(minerId);
+        ownedMiners[voter].push(minerId);
     }
 
     function isMiner(
@@ -212,7 +219,7 @@ contract VoteFactory is Owned {
         }
     }
 
-    function getOwnedMinerLength(address owner) external returns (uint256 length) {
+    function getOwnedMinerLength(address owner) external view returns (uint256 length) {
         return ownedMiners[owner].length;
     }
 

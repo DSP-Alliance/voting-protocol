@@ -7,6 +7,7 @@ import {DSTestPlus} from "solmate/test/utils/DSTestPlus.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {console} from "./utils/Console.sol";
 import {VoteTracker} from "../src/VoteTracker.sol";
+import {VoteFactory} from "../src/VoteFactory.sol";
 import {Utilities} from "./utils/Utilities.sol";
 import {ERC20} from "../src/interfaces/ERC20.sol";
 import {CommonTypes} from "filecoin-solidity/types/CommonTypes.sol";
@@ -23,6 +24,7 @@ contract VoteTrackerTest is DSTestPlus {
     address[] internal lsdTokens;
 
     VoteTracker internal tracker;
+    VoteFactory internal factory;
 
     address constant GLIFOWNER = address(0x674Aaf6777D9783accdF9DBb45cbFe87E308Fc73);
     address constant GLIFPOOL = address(0x3d9B87FA76f37e12748162348C86D5294c469c4D);
@@ -41,7 +43,8 @@ contract VoteTrackerTest is DSTestPlus {
         string[2] memory yesOptions;
         lsdTokens = new address[](1);
         lsdTokens[0] = STFIL;
-        tracker = new VoteTracker(1 days, yesOptions, lsdTokens, 0, users[0], "What sandwich should i eat");
+        factory = new VoteFactory();
+        tracker = new VoteTracker(address(factory), 1 days, yesOptions, lsdTokens, 0, users[0], "What sandwich should i eat");
     }
 
     function testSetUp() public view {
@@ -57,9 +60,10 @@ contract VoteTrackerTest is DSTestPlus {
         uint64[] memory minerIds = emptyMinerIds();
 
         vm.prank(user);
-        (uint powerRBP, uint powerToken) = tracker.registerVoter(address(0), minerIds);
-        assertEq(powerRBP, 0);
-        assertEq(powerToken, user.balance);
+        factory.register(address(0), minerIds);
+        (uint256 tokenPower, uint256 bytePower, uint256 minerTokenPower) = tracker.getVotingPower(user);
+        assertEq(bytePower, 0);
+        assertEq(tokenPower, user.balance);
     }
 
     function testRegisterNotYourMiner() public {
@@ -71,7 +75,7 @@ contract VoteTrackerTest is DSTestPlus {
 
         vm.prank(user);
         vm.expectRevert(VoteTracker.InvalidMiner.selector);
-        tracker.registerVoter(address(0), minerIds);
+        factory.register(address(0), minerIds);
     }
 
     function testRegisterNotYourGlifPool() public {
@@ -83,7 +87,7 @@ contract VoteTrackerTest is DSTestPlus {
 
         vm.prank(user);
         vm.expectRevert(VoteTracker.InvalidGlifPool.selector);
-        tracker.registerVoter(GLIFPOOL, minerIds);
+        factory.register(GLIFPOOL, minerIds);
     }
 
     function testRegisterTwiceNotMiner() public {
@@ -92,13 +96,15 @@ contract VoteTrackerTest is DSTestPlus {
         uint64[] memory minerIds = emptyMinerIds();
 
         vm.prank(user);
-        (uint powerRBP, uint powerToken) = tracker.registerVoter(address(0), minerIds);
-        assertEq(powerRBP, 0);
-        assertEq(powerToken, user.balance);
+        factory.register(address(0), minerIds);
+        (uint256 tokenPower, uint256 bytePower, uint256 minerTokenPower) = tracker.getVotingPower(user);
+
+        assertEq(bytePower, 0);
+        assertEq(tokenPower, user.balance);
 
         vm.prank(user);
-        vm.expectRevert(VoteTracker.AlreadyRegistered.selector);
-        tracker.registerVoter(address(0), minerIds);
+        vm.expectRevert(VoteFactory.AlreadyRegistered.selector);
+        factory.register(address(0), minerIds);
     }
 
     function testRegisterPersonalMiner() public {
@@ -108,9 +114,11 @@ contract VoteTrackerTest is DSTestPlus {
         minerIds[0] = 1889470;
 
         vm.prank(user);
-        (uint powerRBP, uint powerToken) = tracker.registerVoter(address(0), minerIds);
-        assertGt(powerRBP, 0);
-        assertEq(powerToken, user.balance);
+        factory.register(address(0), minerIds);
+
+        (uint256 tokenPower, uint256 bytePower, uint256 minerTokenPower) = tracker.getVotingPower(user);
+        assertGt(bytePower, 0);
+        assertEq(tokenPower, user.balance);
     }
 
     function testRegisterTwicePersonalMiner() public {
@@ -120,13 +128,15 @@ contract VoteTrackerTest is DSTestPlus {
         minerIds[0] = 1889470;
 
         vm.prank(user);
-        (uint powerRBP, uint powerToken) = tracker.registerVoter(address(0), minerIds);
+        factory.register(address(0), minerIds);
+
+        (uint256 powerToken, uint256 powerRBP, uint256 minerTokenPower) = tracker.getVotingPower(user);
         assertGt(powerRBP, 0);
         assertEq(powerToken, user.balance);
 
         vm.prank(user);
-        vm.expectRevert(VoteTracker.AlreadyRegistered.selector);
-        tracker.registerVoter(address(0), minerIds);
+        vm.expectRevert(VoteFactory.AlreadyRegistered.selector);
+        factory.register(address(0), minerIds);
     }
 
     function testRegisterMultiplePersonalMiners() public {
@@ -137,7 +147,9 @@ contract VoteTrackerTest is DSTestPlus {
         minerIds[1] = 1889471;
 
         vm.prank(user);
-        (uint powerRBP, uint powerToken) = tracker.registerVoter(address(0), minerIds);
+        factory.register(address(0), minerIds);
+
+        (uint256 powerToken, uint256 powerRBP, uint256 minerTokenPower) = tracker.getVotingPower(user);
         assertGt(powerRBP, 0);
         assertEq(powerToken, user.balance);
     }
@@ -148,7 +160,9 @@ contract VoteTrackerTest is DSTestPlus {
         uint64[] memory minerIds = glifPoolMinerIds();
 
         vm.prank(user);
-        (uint powerRBP, uint powerToken) = tracker.registerVoter(GLIFPOOL, minerIds);
+        factory.register(GLIFPOOL, minerIds);
+
+        (uint256 powerToken, uint256 powerRBP, uint256 minerTokenPower) = tracker.getVotingPower(user);
         assertGt(powerRBP, 0);
         assertEq(powerToken, user.balance);
     }
@@ -160,13 +174,15 @@ contract VoteTrackerTest is DSTestPlus {
         uint64[] memory minerIds = glifPoolMinerIds();
 
         vm.prank(user);
-        (uint powerRBP, uint powerToken) = tracker.registerVoter(GLIFPOOL, minerIds);
+        factory.register(GLIFPOOL, minerIds);
+
+        (uint256 powerToken, uint256 powerRBP, uint256 minerTokenPower) = tracker.getVotingPower(user);
         assertGt(powerRBP, 0);
         assertEq(powerToken, user.balance);
 
         vm.prank(user);
-        vm.expectRevert(VoteTracker.AlreadyRegistered.selector);
-        tracker.registerVoter(GLIFPOOL, minerIds);
+        vm.expectRevert(VoteFactory.AlreadyRegistered.selector);
+        factory.register(GLIFPOOL, minerIds);
     }
 
 
@@ -590,7 +606,7 @@ contract VoteTrackerTest is DSTestPlus {
 
     function register(address glifPool, uint64[] memory minerIds, address user) internal {
         vm.prank(user);
-        tracker.registerVoter(glifPool, minerIds);
+        factory.register(glifPool, minerIds);
     }
 
     function testToAddress() public returns (address) {
