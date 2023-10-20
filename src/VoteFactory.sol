@@ -133,6 +133,7 @@ contract VoteFactory is Owned {
             if (rbp == 0) continue;
 
             registeredMiner[minerId] = msg.sender;
+            ownedMiners[msg.sender].push(minerId);
         }
 
         if (glif) {
