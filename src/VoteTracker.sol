@@ -245,7 +245,7 @@ contract VoteTracker is Owned {
         if (rbp == token) {
             return rbp;
         } else {
-            return Vote.No;
+            return Vote.Abstain;
         }
     }
 
