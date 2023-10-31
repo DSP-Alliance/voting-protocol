@@ -56,6 +56,7 @@ contract VoteFactory is Owned {
 
     event VoteStarted(address vote, uint32 fipNum, uint32 length);
     event VoterRegistered(address voter, address glif, uint64[] minerIds);
+    event MinerAdded(address voter, address worker, uint64 miner);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          Modifers                          */
@@ -159,6 +160,8 @@ contract VoteFactory is Owned {
 
         registeredMiner[minerId] = voter;
         ownedMiners[voter].push(minerId);
+
+        emit MinerAdded(voter, msg.sender, minerId);
     }
 
     function isMiner(

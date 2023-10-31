@@ -337,7 +337,7 @@ contract VoteTracker is Owned {
         bool glif = false;
         if (glifpool != address(0)) {
             glif = (GlifFactory(glifFactory).isAgent(glifpool) &&
-                Owned(glifpool).owner() == msg.sender);
+                Owned(glifpool).owner() == voter);
         }
 
         // Collect RBP voting weight
