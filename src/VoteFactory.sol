@@ -3,6 +3,8 @@ pragma solidity ^0.8.19;
 
 import "./VoteTracker.sol";
 import "solmate/auth/Owned.sol";
+import "filecoin-solidity/utils/FilAddresses.sol";
+import "filecoin-solidity/utils/FilAddressIdConverter.sol";
 
 /*
  _______  __   __       _______   ______   ______    __  .__   __.                     
@@ -130,7 +132,9 @@ contract VoteFactory is Owned {
 
             // Add their RBP voting weight
             address minerOwner = glif ? glifpool : msg.sender;
-            uint rbp = voterRBP(minerId, minerOwner);
+            if (!isMiner(minerId, minerOwner)) continue;
+
+            uint rbp = voterRBP(minerId);
             if (rbp == 0) continue;
 
             registeredMiner[minerId] = msg.sender;
@@ -148,7 +152,18 @@ contract VoteFactory is Owned {
     }
 
     function addMiner(address voter, uint64 minerId) public {
-        if (!isMiner(minerId, msg.sender)) {
+        (bool success, uint64 actorId) = FilAddressIdConverter.getActorID(msg.sender);
+        if (!success) {
+            revert NotOwner();
+        }
+
+        CommonTypes.FilAddress memory worker = FilAddresses.fromActorID(actorId);
+        bool isController = MinerAPI.isControllingAddress(
+            CommonTypes.FilActorId.wrap(minerId),
+            worker
+        );
+
+        if (!isController) {
             revert NotOwner();
         }
 
@@ -191,12 +206,8 @@ contract VoteFactory is Owned {
     /// @param voter The address of the voter
     /// @return power The voting power of the voter
     function voterRBP(
-        uint64 minerId,
-        address voter
+        uint64 minerId
     ) public view returns (uint256 power) {
-        bool isminer = isMiner(minerId, voter);
-        if (!isminer) return 0;
-
         // Vote weight as a miner
         PowerTypes.MinerRawPowerReturn memory pow = PowerAPI.minerRawPower(
             uint64(minerId)

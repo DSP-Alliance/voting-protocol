@@ -349,7 +349,7 @@ contract VoteTracker is Owned {
             address minerOwner = glif ? glifpool : voter;
 
             // Set the RBP voting weight
-            uint rbp = factory.voterRBP(minerId, minerOwner);
+            uint rbp = factory.voterRBP(minerId);
             if (rbp == 0) continue;
 
             bytePower += rbp;

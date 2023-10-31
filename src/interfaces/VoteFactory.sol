@@ -9,5 +9,5 @@ interface IVoteFactory {
     function ownedGlifPool(address voter) external view returns (address);
     function ownedMiners(address voter, uint256 index) external view returns (uint64);
     function getOwnedMinerLength(address owner) external view returns (uint256 length);
-    function voterRBP(uint64 minerId, address minerOwner) external view returns (uint256);
+    function voterRBP(uint64 minerId) external view returns (uint256);
 }
