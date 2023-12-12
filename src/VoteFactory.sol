@@ -203,7 +203,6 @@ contract VoteFactory is Owned {
     /// @notice Calculates the voting power of a voter for a single miner
     /// @notice If voting power is zero, voting power is calculated off of FIL balance and LSD token balances
     /// @param minerId The miner to calculate voting power for
-    /// @param voter The address of the voter
     /// @return power The voting power of the voter
     function voterRBP(
         uint64 minerId
